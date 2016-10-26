@@ -347,6 +347,7 @@ class Application(tk.Frame):
         register = eval('self.register%s' % quizType.name)
         try:
             if register():
+                self._qdManip.save()
                 messagebox.showinfo('登録完了', '登録したよ！')
         except IntegrityError:
             self.registerFailMsgBox('既に同じクイズが登録されているよ！')
