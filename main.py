@@ -86,7 +86,8 @@ class Application(tk.Frame):
 # mainNbook
 #     self.getCurrentQuizType() :: QuizType
 #
-# questionFrameOX
+# questionFrameOX, Four, Assoc, Sort, Panel, Slot, Typing, Cube, Effect, Order,
+#              Connect, Multi, Group
 #     self.getQuestion() :: str
 # answerOX
 #     self.answerOX.get() :: bool (default True)
@@ -229,61 +230,97 @@ class Application(tk.Frame):
 
     def frameFour(self):
         outerFrame = tk.Frame()
+
+        self.questionFrameFour = QuestionFrame(outerFrame)
+        self.questionFrameFour.pack()
         return outerFrame
 
 
     def frameAssoc(self):
         outerFrame = tk.Frame()
+
+        self.questionFrameAssoc = QuestionFrame(outerFrame)
+        self.questionFrameAssoc.pack()
         return outerFrame
 
 
     def frameSort(self):
         outerFrame = tk.Frame()
+
+        self.questionFrameSort = QuestionFrame(outerFrame)
+        self.questionFrameSort.pack()
         return outerFrame
 
 
     def framePanel(self):
         outerFrame = tk.Frame()
+
+        self.questionFramePanel = QuestionFrame(outerFrame)
+        self.questionFramePanel.pack()
         return outerFrame
 
 
     def frameSlot(self):
         outerFrame = tk.Frame()
+
+        self.questionFrameSlot = QuestionFrame(outerFrame)
+        self.questionFrameSlot.pack()
         return outerFrame
 
 
     def frameTyping(self):
         outerFrame = tk.Frame()
+
+        self.questionFrameTyping = QuestionFrame(outerFrame)
+        self.questionFrameTyping.pack()
         return outerFrame
 
 
     def frameCube(self):
         outerFrame = tk.Frame()
+
+        self.questionFrameCube = QuestionFrame(outerFrame)
+        self.questionFrameCube.pack()
         return outerFrame
 
 
     def frameEffect(self):
         outerFrame = tk.Frame()
+
+        self.questionFrameEffect = QuestionFrame(outerFrame)
+        self.questionFrameEffect.pack()
         return outerFrame
 
 
     def frameOrder(self):
         outerFrame = tk.Frame()
+
+        self.questionFrameOrder = QuestionFrame(outerFrame)
+        self.questionFrameOrder.pack()
         return outerFrame
 
 
     def frameConnect(self):
         outerFrame = tk.Frame()
+
+        self.questionFrameConnect = QuestionFrame(outerFrame)
+        self.questionFrameConnect.pack()
         return outerFrame
 
 
     def frameMulti(self):
         outerFrame = tk.Frame()
+
+        self.questionFrameMulti = QuestionFrame(outerFrame)
+        self.questionFrameMulti.pack()
         return outerFrame
 
 
     def frameGroup(self):
         outerFrame = tk.Frame()
+
+        self.questionFrameGroup = QuestionFrame(outerFrame)
+        self.questionFrameGroup.pack()
         return outerFrame
 
 
