@@ -51,6 +51,8 @@ class QuestionFrame(tk.LabelFrame):
 
     def formatQuestion(self):
         question = self.question
+        # 文中の空白類文字の削除
+        question = ''.join(question.split())
         transdict = str.maketrans(',，.．!?', '、、。。！？')
         question = question.translate(transdict)
         # 数字１文字は全角，２文字以上は半角
