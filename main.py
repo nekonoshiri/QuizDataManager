@@ -4,9 +4,11 @@ import tkinter as tk
 import tkinter.ttk as ttk
 from tkinter import messagebox
 from tkinter.scrolledtext import ScrolledText
+import re
 
 from tkhelper import ListboxIdd, ComboboxIdd
 from dbmanip import QuestionDataDBManip
+from mojiutil import MojiUtil
 
 
 class QuizType(Enum):
@@ -23,6 +25,42 @@ class QuizType(Enum):
     Connect = '線結び'
     Multi = '一問多答'
     Group = 'グループ分け'
+
+
+class QuestionFrame(tk.LabelFrame):
+    def __init__(self, master, **option):
+        super().__init__(master, **option)
+        self['text'] = '問題'
+        self.questionText = QuestionText(self, height = 5)
+        self.questionText.pack()
+        formatButton = tk.Button(self, text = '整形')
+        formatButton['command'] = self.formatQuestion
+        formatButton.pack(anchor = tk.E)
+
+
+    @property
+    def question(self):
+        return self.questionText.get('1.0', tk.END).strip()
+
+
+    @question.setter
+    def question(self, question):
+        self.questionText.delete('1.0', tk.END)
+        self.questionText.insert(tk.END, question.strip())
+
+
+    def formatQuestion(self):
+        question = self.question
+        transdict = str.maketrans(',，.．!?', '、、。。！？')
+        question = question.translate(transdict)
+        # 数字１文字は全角，２文字以上は半角
+        question = re.sub('\d',
+            lambda obj: MojiUtil.toZenkaku(obj.group(0)), question
+        )
+        question = re.sub('\d\d+',
+            lambda obj: MojiUtil.toHankaku(obj.group(0)), question
+        )
+        self.question = question
 
 
 class QuestionText(ScrolledText):
@@ -46,12 +84,12 @@ class Application(tk.Frame):
 # mainNbook
 #     self.getCurrentQuizType() :: QuizType
 #
-# questionTextOX
+# questionFrameOX
 #     self.getQuestion() :: str
 # answerOX
 #     self.answerOX.get() :: bool (default True)
 #
-# commentEntry
+# commentText
 #     self.getComment() :: str
 # difficulty_min :: int (default 1)
 # difficulty_max :: int (default 5)
@@ -175,10 +213,8 @@ class Application(tk.Frame):
 
         outerFrame = tk.Frame()
 
-        questionFrame = tk.LabelFrame(outerFrame, text = '問題')
-        questionFrame.pack()
-        self.questionTextOX = QuestionText(questionFrame)
-        self.questionTextOX.pack()
+        self.questionFrameOX = QuestionFrame(outerFrame)
+        self.questionFrameOX.pack()
         answerFrame = tk.LabelFrame(outerFrame, text = '答え')
         answerFrame.pack()
         tk.Radiobutton(answerFrame, text = '○', variable = self.answerOX,
@@ -270,8 +306,8 @@ class Application(tk.Frame):
 
         commentFrame = tk.LabelFrame(outerFrame, text = 'コメント')
         commentFrame.pack()
-        self.commentEntry = tk.Entry(commentFrame, width = 100)
-        self.commentEntry.pack()
+        self.commentText = ScrolledText(commentFrame, height = 3)
+        self.commentText.pack()
 
         difficultyFrame = tk.LabelFrame(outerFrame, text = '難易度（最小／最大）')
         difficultyFrame.pack()
@@ -308,13 +344,12 @@ class Application(tk.Frame):
 
     def getQuestion(self):
         quizType = self.getCurrentQuizType()
-        questionText = eval('self.questionText%s' % quizType.name)
-        question = questionText.get('1.0', tk.END).strip()
-        return question
+        questionFrame = eval('self.questionFrame%s' % quizType.name)
+        return questionFrame.question
 
 
     def getComment(self):
-        return self.commentEntry.get().strip()
+        return self.commentText.get('1.0', tk.END).strip()
 
 
     def registerFailMsgBox(self, text):
