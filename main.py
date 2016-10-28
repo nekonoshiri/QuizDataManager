@@ -65,6 +65,21 @@ class QuestionFrame(tk.LabelFrame):
         self.question = question
 
 
+class EntryFrame(tk.LabelFrame):
+    def __init__(self, master, **option):
+        super().__init__(master, **option)
+        self.ety = tk.Entry(self, width = 30)
+        self.ety.pack()
+
+
+    def getEntryText(self):
+        return self.ety.get().strip()
+
+
+    def deleteEntryText(self):
+        self.ety.delete(0, tk.END)
+
+
 class QuestionText(ScrolledText):
     def __init__(self, master, **option):
         super().__init__(master, **option)
@@ -82,15 +97,24 @@ class Application(tk.Frame):
 # subGenreId :: None or int
 # examGenreId :: None or int
 # seriesId :: None or int
+# assocTypeId :: int (default first index)
 #
 # mainNbook
 #     self.getCurrentQuizType() :: QuizType
 #
-# questionFrameOX, Four, Assoc, Sort, Panel, Slot, Typing, Cube, Effect, Order,
+# questionFrameOX, Four, Sort, Panel, Slot, Typing, Cube, Effect, Order,
 #              Connect, Multi, Group
 #     self.getQuestion() :: str
+#
 # answerOX
 #     self.answerOX.get() :: bool (default True)
+#
+# answerEntryFour :: EntryFrame
+# dummy1EntryFour, 2, 3, 4 :: EntryFrame
+#
+# question1EntryAssoc, 2, 3, 4 :: EntryFrame
+# answerEntryAssoc :: EntryFrame
+# dummy1EntryAssoc, 2, 3, 4 :: EntryFrame
 #
 # commentText
 #     self.getComment() :: str
@@ -233,14 +257,67 @@ class Application(tk.Frame):
 
         self.questionFrameFour = QuestionFrame(outerFrame)
         self.questionFrameFour.pack()
+
+        self.answerEntryFour = EntryFrame(outerFrame, text = '答え')
+        self.answerEntryFour.pack()
+        self.dummy1EntryFour = EntryFrame(outerFrame, text = 'ダミー１')
+        self.dummy1EntryFour.pack()
+        self.dummy2EntryFour = EntryFrame(outerFrame, text = 'ダミー２')
+        self.dummy2EntryFour.pack()
+        self.dummy3EntryFour = EntryFrame(outerFrame, text = 'ダミー３')
+        self.dummy3EntryFour.pack()
+
         return outerFrame
 
 
     def frameAssoc(self):
+        def onAssocTypeBoxSelect(evt):
+            (self.assocTypeId, assocTypeStr) = assocTypeBox.selectedIdd
+            assocTypeLabel['text'] = assocTypeStr
+
+        assocTypeList = self._qdManip.getAssocTypeList()
+
         outerFrame = tk.Frame()
 
-        self.questionFrameAssoc = QuestionFrame(outerFrame)
-        self.questionFrameAssoc.pack()
+        topFrame = tk.Frame(outerFrame)
+        topFrame.pack()
+
+        questionFrame = tk.Frame(topFrame)
+        questionFrame.pack(side = tk.LEFT)
+        self.question1EntryAssoc = EntryFrame(questionFrame, text = 'ヒント１')
+        self.question1EntryAssoc.pack()
+        self.question2EntryAssoc = EntryFrame(questionFrame, text = 'ヒント２')
+        self.question2EntryAssoc.pack()
+        self.question3EntryAssoc = EntryFrame(questionFrame, text = 'ヒント３')
+        self.question3EntryAssoc.pack()
+        self.question4EntryAssoc = EntryFrame(questionFrame, text = 'ヒント４')
+        self.question4EntryAssoc.pack()
+
+        paddingFrame = tk.Frame(topFrame, width = 50)
+        paddingFrame.pack(side = tk.LEFT)
+
+        answerFrame = tk.Frame(topFrame)
+        answerFrame.pack(side = tk.LEFT)
+        self.answerEntryAssoc = EntryFrame(answerFrame, text = '答え')
+        self.answerEntryAssoc.pack()
+        self.dummy1EntryAssoc = EntryFrame(answerFrame, text = 'ダミー１')
+        self.dummy1EntryAssoc.pack()
+        self.dummy2EntryAssoc = EntryFrame(answerFrame, text = 'ダミー２')
+        self.dummy2EntryAssoc.pack()
+        self.dummy3EntryAssoc = EntryFrame(answerFrame, text = 'ダミー３')
+        self.dummy3EntryAssoc.pack()
+
+        bottomFrame = tk.LabelFrame(outerFrame, text = '連想タイプ')
+        bottomFrame.pack()
+        assocTypeBox = ListboxIdd(bottomFrame, height = 4)
+        assocTypeBox.iddList = assocTypeList
+        assocTypeBox.onSelect = onAssocTypeBoxSelect
+        assocTypeBox.pack()
+        assocTypeLabel = tk.Label(bottomFrame, bg = 'LightPink')
+        assocTypeLabel.pack()
+
+        # initialize
+        (self.assocTypeId, assocTypeLabel['text']) = assocTypeList[0]
         return outerFrame
 
 
@@ -383,12 +460,26 @@ class Application(tk.Frame):
 
     def getQuestion(self):
         quizType = self.getCurrentQuizType()
+        if quizType == QuizType.Assoc:
+            return 'DUMMY'
         questionFrame = eval('self.questionFrame%s' % quizType.name)
         return questionFrame.question
 
 
+    def deleteQuestion(self):
+        for quizType in QuizType:
+            if quizType == QuizType.Assoc:
+                continue
+            questionFrame = eval('self.questionFrame%s' % quizType.name)
+            questionFrame.question = ''
+
+
     def getComment(self):
         return self.commentText.get('1.0', tk.END).strip()
+
+
+    def deleteComment(self):
+        self.commentText.delete('1.0', tk.END)
 
 
     def registerFailMsgBox(self, text):
@@ -423,6 +514,7 @@ class Application(tk.Frame):
             if register():
                 self._qdManip.save()
                 messagebox.showinfo('登録完了', '登録したよ！')
+                self.afterRegisterSuccess()
         except IntegrityError:
             self.registerFailMsgBox('既に同じクイズが登録されているよ！')
             return
@@ -439,6 +531,68 @@ class Application(tk.Frame):
             self.difficulty_min, self.difficulty_max, question, answer,
             comment, stable, self.seriesId)
         return True
+
+
+    def registerFour(self):
+        question = self.validationCommon()
+        if not question:
+            return False
+        answer = self.answerEntryFour.getEntryText()
+        dummy1 = self.dummy1EntryFour.getEntryText()
+        dummy2 = self.dummy2EntryFour.getEntryText()
+        dummy3 = self.dummy3EntryFour.getEntryText()
+        if not (answer and dummy1 and dummy2 and dummy3):
+            self.registerFailMsgBox('答えを入力してね！')
+            return False
+        comment = self.getComment()
+        stable = self.stable.get()
+        self._qdManip.registerFour(self.subGenreId, self.examGenreId,
+            self.difficulty_min, self.difficulty_max, question, answer,
+            dummy1, dummy2, dummy3, comment, stable, self.seriesId)
+        return True
+
+
+    def registerAssoc(self):
+        if not self.validationCommon():
+            return False
+        question1 = self.question1EntryAssoc.getEntryText()
+        question2 = self.question2EntryAssoc.getEntryText()
+        question3 = self.question3EntryAssoc.getEntryText()
+        question4 = self.question4EntryAssoc.getEntryText()
+        if not (question1 and question1 and question2 and question3):
+            self.registerFailMsgBox('問題を入力してね！')
+            return False
+        answer = self.answerEntryAssoc.getEntryText()
+        dummy1 = self.dummy1EntryAssoc.getEntryText()
+        dummy2 = self.dummy2EntryAssoc.getEntryText()
+        dummy3 = self.dummy3EntryAssoc.getEntryText()
+        if not (answer and dummy1 and dummy2 and dummy3):
+            self.registerFailMsgBox('答えを入力してね！')
+            return False
+        comment = self.getComment()
+        stable = self.stable.get()
+        self._qdManip.registerAssoc(self.subGenreId, self.examGenreId,
+            self.difficulty_min, self.difficulty_max,
+            question1, question2, question3, question4, answer,
+            dummy1, dummy2, dummy3, self.assocTypeId, comment, stable, self.seriesId)
+        return True
+
+
+    def afterRegisterSuccess(self):
+        self.deleteQuestion()
+        self.deleteComment()
+        self.answerEntryFour.deleteEntryText()
+        self.dummy1EntryFour.deleteEntryText()
+        self.dummy2EntryFour.deleteEntryText()
+        self.dummy3EntryFour.deleteEntryText()
+        self.question1EntryAssoc.deleteEntryText()
+        self.question2EntryAssoc.deleteEntryText()
+        self.question3EntryAssoc.deleteEntryText()
+        self.question4EntryAssoc.deleteEntryText()
+        self.answerEntryAssoc.deleteEntryText()
+        self.dummy1EntryAssoc.deleteEntryText()
+        self.dummy2EntryAssoc.deleteEntryText()
+        self.dummy3EntryAssoc.deleteEntryText()
 
 
 

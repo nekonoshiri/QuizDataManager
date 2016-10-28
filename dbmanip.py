@@ -52,6 +52,7 @@ class QuestionDataDBManip(DBManip):
         self.__subGenreList = self.select(['id', 'subgenre', 'genre'], 'subgenre')
         self.__examGenreList = self.select(['id', 'examgenre'], 'examgenre')
         self.__seriesList = self.select(['id', 'series'], 'series')
+        self.__assocTypeList = self.select(['id', 'assoctype'], 'assoctype')
 
 
     # [(id, genre)]
@@ -82,6 +83,10 @@ class QuestionDataDBManip(DBManip):
         return deepcopy(self.__seriesList)
 
 
+    def getAssocTypeList(self):
+        return deepcopy(self.__assocTypeList)
+
+
     def getGenreNameById(self, genreId):
         return [g for (i, g) in self.__genreList if i == genreId][0]
 
@@ -110,12 +115,37 @@ class QuestionDataDBManip(DBManip):
         )
 
 
-    def registerFour(self):
-        pass
+    def registerFour(self, subGenreId: int, examGenreId: int,
+            difficulty_min: int, difficulty_max: int, question: str, answer: str,
+            dummy1: str, dummy2: str, dummy3: str,
+            comment: str, stable: bool, seriesId: int):
+        self.insert(
+            'quiz_four',
+            ['subgenre', 'examgenre', 'difficulty_min', 'difficulty_max',
+             'question', 'answer', 'dummy1', 'dummy2', 'dummy3',
+             'comment', 'stable', 'series'],
+            [subGenreId, examGenreId, difficulty_min, difficulty_max,
+             question, answer, dummy1, dummy2, dummy3,
+             comment, stable, seriesId]
+        )
 
 
-    def registerAssoc(self):
-        pass
+    def registerAssoc(self, subGenreId: int, examGenreId: int,
+            difficulty_min: int, difficulty_max: int,
+            question1: str, question2: str, question3: str, question4:str,
+            answer: str, dummy1: str, dummy2: str, dummy3: str, assoctype: int,
+            comment: str, stable: bool, seriesId: int):
+        self.insert(
+            'quiz_assoc',
+            ['subgenre', 'examgenre', 'difficulty_min', 'difficulty_max',
+             'question1', 'question2', 'question3', 'question4',
+             'answer', 'dummy1', 'dummy2', 'dummy3', 'assoctype',
+             'comment', 'stable', 'series'],
+            [subGenreId, examGenreId, difficulty_min, difficulty_max,
+             question1, question2, question3, question4,
+             answer, dummy1, dummy2, dummy3, assoctype,
+             comment, stable, seriesId]
+        )
 
 
     def registerSort(self):
