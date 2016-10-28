@@ -741,13 +741,12 @@ class Application(tk.Frame):
 
 
     def deleteQuestion(self):
+        self.question1EntryAssoc.deleteEntryText()
+        self.question2EntryAssoc.deleteEntryText()
+        self.question3EntryAssoc.deleteEntryText()
+        self.question4EntryAssoc.deleteEntryText()
         for quizType in QuizType:
-            if quizType == QuizType.Assoc:
-                self.question1EntryAssoc.deleteEntryText()
-                self.question2EntryAssoc.deleteEntryText()
-                self.question3EntryAssoc.deleteEntryText()
-                self.question4EntryAssoc.deleteEntryText()
-            else:
+            if quizType != QuizType.Assoc:
                 questionFrame = eval('self.questionFrame%s' % quizType.name)
                 questionFrame.question = ''
 
