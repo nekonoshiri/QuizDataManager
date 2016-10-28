@@ -162,13 +162,13 @@ class QuestionDataDBManip(DBManip):
 
     def registerPanel(self, subGenreId: int, examGenreId: int,
             difficulty_min: int, difficulty_max: int, question: str,
-            answer: str, dummy: str, comment: str, stable: bool, seriesId: int):
+            answer: str, panel: str, comment: str, stable: bool, seriesId: int):
         self.insert(
             'quiz_panel',
             ['subgenre', 'examgenre', 'difficulty_min', 'difficulty_max',
-             'question', 'answer', 'dummy', 'comment', 'stable', 'series'],
+             'question', 'answer', 'panel', 'comment', 'stable', 'series'],
             [subGenreId, examGenreId, difficulty_min, difficulty_max,
-             question, answer, dummy, comment, stable, seriesId]
+             question, answer, panel, comment, stable, seriesId]
         )
 
 
@@ -187,16 +187,43 @@ class QuestionDataDBManip(DBManip):
         )
 
 
-    def registerTyping(self):
-        pass
+    def registerTyping(self, subGenreId: int, examGenreId: int,
+            difficulty_min: int, difficulty_max: int, question: str, typingtype: int,
+            answer: str, comment: str, stable: bool, seriesId: int):
+        self.insert(
+            'quiz_typing',
+            ['subgenre', 'examgenre', 'difficulty_min', 'difficulty_max',
+             'question', 'typingtype', 'answer', 'comment', 'stable', 'series'],
+            [subGenreId, examGenreId, difficulty_min, difficulty_max,
+             question, typingtype, answer, comment, stable, seriesId]
+        )
 
 
-    def registerCube(self):
-        pass
+    def registerCube(self, subGenreId: int, examGenreId: int,
+            difficulty_min: int, difficulty_max: int, question: str, typingtype: int,
+            answer: str, comment: str, stable: bool, seriesId: int):
+        self.insert(
+            'quiz_cube',
+            ['subgenre', 'examgenre', 'difficulty_min', 'difficulty_max',
+             'question', 'typingtype', 'answer', 'comment', 'stable', 'series'],
+            [subGenreId, examGenreId, difficulty_min, difficulty_max,
+             question, typingtype, answer, comment, stable, seriesId]
+        )
 
 
-    def registerEffect(self):
-        pass
+    def registerEffect(self, subGenreId: int, examGenreId: int,
+            difficulty_min: int, difficulty_max: int,
+            question: str, questionEffect: str, typingtype: int, answer: str,
+            comment: str, stable: bool, seriesId: int):
+        self.insert(
+            'quiz_effect',
+            ['subgenre', 'examgenre', 'difficulty_min', 'difficulty_max',
+             'question', 'questionEffect',
+             'typingtype', 'answer', 'comment', 'stable', 'series'],
+            [subGenreId, examGenreId, difficulty_min, difficulty_max,
+             question, questionEffect,
+             typingtype, answer, comment, stable, seriesId]
+        )
 
 
     def registerOrder(self):

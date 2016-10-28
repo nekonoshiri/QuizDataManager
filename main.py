@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, IntEnum
 from sqlite3 import IntegrityError
 import tkinter as tk
 import tkinter.ttk as ttk
@@ -9,6 +9,7 @@ import re
 from tkhelper import ListboxIdd, ComboboxIdd
 from dbmanip import QuestionDataDBManip
 from mojiutil import MojiUtil
+import validationException as ve
 
 
 class QuizType(Enum):
@@ -27,11 +28,17 @@ class QuizType(Enum):
     Group = 'グループ分け'
 
 
+class TypingType(IntEnum):
+    Hiragana = 1
+    Katakana = 2
+    Eisuuji = 3
+
+
 class QuestionFrame(tk.LabelFrame):
     def __init__(self, master, **option):
         super().__init__(master, **option)
         self['text'] = '問題'
-        self.questionText = QuestionText(self, height = 5)
+        self.questionText = ScrolledText(self, height = 5)
         self.questionText.pack()
         formatButton = tk.Button(self, text = '整形')
         formatButton['command'] = self.formatQuestion
@@ -65,6 +72,27 @@ class QuestionFrame(tk.LabelFrame):
         self.question = question
 
 
+class AnswerTextFrame(tk.LabelFrame):
+    def __init__(self, master, **option):
+        super().__init__(master, **option)
+        self['text'] = '答え（改行区切り）'
+        self.answerText = ScrolledText(self, height = 5)
+        self.answerText.pack()
+
+
+    @property
+    def answer(self):
+        answerStr = self.answerText.get('1.0', tk.END).strip()
+        answerList = answerStr.split('\n')
+        return [ans.strip() for ans in answerList]
+
+
+    @answer.setter
+    def answer(self, answerStr):
+        self.answerText.delete('1.0', tk.END)
+        self.answerText.insert(tk.END, answerStr.strip())
+
+
 class EntryFrame(tk.LabelFrame):
     def __init__(self, master, **option):
         super().__init__(master, **option)
@@ -78,12 +106,6 @@ class EntryFrame(tk.LabelFrame):
 
     def deleteEntryText(self):
         self.ety.delete(0, tk.END)
-
-
-class QuestionText(ScrolledText):
-    def __init__(self, master, **option):
-        super().__init__(master, **option)
-        self['height'] = 5
 
 
 class Application(tk.Frame):
@@ -103,8 +125,7 @@ class Application(tk.Frame):
 #     self.getCurrentQuizType() :: QuizType
 #
 # questionFrameOX, Four, Sort, Panel, Slot, Typing, Cube, Effect, Order,
-#              Connect, Multi, Group
-#     self.getQuestion() :: str
+#              Connect, Multi, Group :: QuestionFrame
 #
 # answerOX
 #     self.answerOX.get() :: bool (default True)
@@ -118,14 +139,20 @@ class Application(tk.Frame):
 #
 # answerEntrySort :: EntryFrame
 #
-# answerEntryPanel :: EntryFrame
-# dummyEntryPanel :: EntryFrame
+# answerFramePanel :: AnswerTextFrame
+# panelEntryPanel :: EntryFrame
 #
 # answerEntrySlot :: EntryFrame
 # dummy1EntrySlot, 2, 3 :: EntryFrame
 #
+# answerFrameTyping :: AnswerTextFrame
+#
+# answerEntryCube :: EntryFrame
+#
+# questionEntryEffect :: EntryFrame
+# answerFrameEffect :: AnswerTextFrame
+#
 # commentText
-#     self.getComment() :: str
 # difficulty_min :: int (default 1)
 # difficulty_max :: int (default 5)
 #     satisfy (1 <= difficulty_min <= difficulty_max <= 5)
@@ -348,11 +375,13 @@ class Application(tk.Frame):
         self.questionFramePanel = QuestionFrame(outerFrame)
         self.questionFramePanel.pack()
 
-        self.answerEntryPanel = EntryFrame(outerFrame, text = '答え')
-        self.answerEntryPanel.pack()
+        self.answerFramePanel = AnswerTextFrame(outerFrame)
+        self.answerFramePanel.pack()
 
-        self.dummyEntryPanel = EntryFrame(outerFrame, text = 'ダミー選択肢（答えを除く）')
-        self.dummyEntryPanel.pack()
+        self.panelEntryPanel = EntryFrame(outerFrame,
+            text = 'パネル（8枚または10枚）')
+        self.panelEntryPanel.pack()
+
         return outerFrame
 
 
@@ -382,6 +411,9 @@ class Application(tk.Frame):
 
         self.questionFrameTyping = QuestionFrame(outerFrame)
         self.questionFrameTyping.pack()
+
+        self.answerFrameTyping = AnswerTextFrame(outerFrame)
+        self.answerFrameTyping.pack()
         return outerFrame
 
 
@@ -390,6 +422,9 @@ class Application(tk.Frame):
 
         self.questionFrameCube = QuestionFrame(outerFrame)
         self.questionFrameCube.pack()
+
+        self.answerEntryCube = EntryFrame(outerFrame, text = '答え')
+        self.answerEntryCube.pack()
         return outerFrame
 
 
@@ -398,6 +433,13 @@ class Application(tk.Frame):
 
         self.questionFrameEffect = QuestionFrame(outerFrame)
         self.questionFrameEffect.pack()
+
+        self.questionEntryEffect = EntryFrame(outerFrame,
+            text = 'エフェクトをかける文字')
+        self.questionEntryEffect.pack()
+
+        self.answerFrameEffect = AnswerTextFrame(outerFrame)
+        self.answerFrameEffect.pack()
         return outerFrame
 
 
@@ -493,202 +535,249 @@ class Application(tk.Frame):
     def getQuestion(self):
         quizType = self.getCurrentQuizType()
         if quizType == QuizType.Assoc:
-            return 'DUMMY'
-        questionFrame = eval('self.questionFrame%s' % quizType.name)
-        return questionFrame.question
-
-
-    def deleteQuestion(self):
-        for quizType in QuizType:
-            if quizType == QuizType.Assoc:
-                continue
+            question = (
+                self.question1EntryAssoc.getEntryText(),
+                self.question2EntryAssoc.getEntryText(),
+                self.question3EntryAssoc.getEntryText(),
+                self.question4EntryAssoc.getEntryText(),
+            )
+            for q in question:
+                if not q: raise ve.QuestionBlankError
+        else:
             questionFrame = eval('self.questionFrame%s' % quizType.name)
-            questionFrame.question = ''
+            question = questionFrame.question
+            if not question:
+                raise ve.QuestionBlankError
+        return question
 
 
-    def getComment(self):
-        return self.commentText.get('1.0', tk.END).strip()
+    def getTypingTypeAndAnswer(self):
+        def getTypingType(answer):
+            if MojiUtil.isHiragana(answer):
+                return TypingType.Hiragana
+            elif MojiUtil.isZenkakuKatakana(answer):
+                return TypingType.Katakana
+            elif answer.encode('utf-8').isalnum():
+                return TypingType.Eisuuji
+            else:
+                raise ve.TypingTypeInconsistError
 
+        quizType = self.getCurrentQuizType()
+        if quizType == QuizType.Typing:
+            rowAnswerList = self.answerFrameTyping.answer
+        elif quizType == QuizType.Cube:
+            rowAnswerList = [self.answerEntryCube.getEntryText()]
+        elif quizType == QuizType.Effect:
+            rowAnswerList = self.answerFrameEffect.answer
+        else:
+            return
 
-    def deleteComment(self):
-        self.commentText.delete('1.0', tk.END)
+        answerList = [str.upper(MojiUtil.toHankaku(ans)) for ans in rowAnswerList]
+        typingType = None
+        for answer in answerList:
+            if not answer:
+                raise ve.AnswerBlankError
+            if len(answer) > 8:
+                raise ve.AnswerLengthOverError
+            if typingType is None:
+                typingType = getTypingType(answer)
+                continue
+            newTypingType = getTypingType(answer)
+            if typingType != newTypingType:
+                raise ve.TypingTypeInconsistError
+            typingType = newTypingType
 
-
-    def registerFailMsgBox(self, text):
-        messagebox.showwarning('登録失敗', text)
+        answerStr = '\n'.join(answerList)
+        return (typingType, answerStr)
 
 
     def validationCommon(self):
         if self.genreId is None:
-            self.registerFailMsgBox('ジャンルを入力してね！')
-            return False
+            raise ve.GenreNoneError
         if self.subGenreId is None:
-            self.registerFailMsgBox('サブジャンルを入力してね！')
-            return False
+            raise ve.SubGenreNoneError
         if self.examGenreId is None:
-            self.registerFailMsgBox('検定ジャンルを入力してね！')
-            return False
+            raise ve.ExamGenreNoneError
         if self.seriesId is None:
-            self.registerFailMsgBox('回収シリーズを入力してね！')
-            return False
-        quizType = self.getCurrentQuizType()
-        question = self.getQuestion()
-        if not question:
-            self.registerFailMsgBox('問題を入力してね！')
-            return False
-        return question
+            raise ve.SeriesIdNoneError
 
 
     def registerMain(self):
         quizType = self.getCurrentQuizType()
         register = eval('self.register%s' % quizType.name)
         try:
-            if register():
-                self._qdManip.save()
-                messagebox.showinfo('登録完了', '登録したよ！')
-                self.afterRegisterSuccess()
+            self.validationCommon()
+            comment = self.commentText.get('1.0', tk.END).strip()
+            stable = self.stable.get()
+            register(comment, stable)
+            self._qdManip.save()
+            messagebox.showinfo('登録完了', '登録したよ！')
+            self.deleteEachTextEntry()
+        except ve.ValidationError as verr:
+            messagebox.showwarning('登録失敗', verr.message)
         except IntegrityError:
-            self.registerFailMsgBox('既に同じクイズが登録されているよ！')
-            return
+            messagebox.showwarning('登録失敗',
+                '既に同じクイズが登録されているよ！')
 
 
-    def registerOX(self):
-        question = self.validationCommon()
-        if not question:
-            return False
+    def registerOX(self, comment, stable):
+        question = self.getQuestion()
         answer = self.answerOX.get()
-        comment = self.getComment()
-        stable = self.stable.get()
         self._qdManip.registerOX(self.subGenreId, self.examGenreId,
             self.difficulty_min, self.difficulty_max, question, answer,
             comment, stable, self.seriesId)
-        return True
 
 
-    def registerFour(self):
-        question = self.validationCommon()
-        if not question:
-            return False
+    def registerFour(self, comment, stable):
+        question = self.getQuestion()
         answer = self.answerEntryFour.getEntryText()
         dummy1 = self.dummy1EntryFour.getEntryText()
         dummy2 = self.dummy2EntryFour.getEntryText()
         dummy3 = self.dummy3EntryFour.getEntryText()
-        if not (answer and dummy1 and dummy2 and dummy3):
-            self.registerFailMsgBox('答えを入力してね！')
-            return False
-        comment = self.getComment()
-        stable = self.stable.get()
+        for s in (answer, dummy1, dummy2, dummy3):
+            if not s: raise ve.AnswerBlankError
         self._qdManip.registerFour(self.subGenreId, self.examGenreId,
             self.difficulty_min, self.difficulty_max, question, answer,
             dummy1, dummy2, dummy3, comment, stable, self.seriesId)
-        return True
 
 
-    def registerAssoc(self):
-        if not self.validationCommon():
-            return False
-        question1 = self.question1EntryAssoc.getEntryText()
-        question2 = self.question2EntryAssoc.getEntryText()
-        question3 = self.question3EntryAssoc.getEntryText()
-        question4 = self.question4EntryAssoc.getEntryText()
-        if not (question1 and question1 and question2 and question3):
-            self.registerFailMsgBox('問題を入力してね！')
-            return False
+    def registerAssoc(self, comment, stable):
+        (question1, question2, question3, question4) = self.getQuestion()
         answer = self.answerEntryAssoc.getEntryText()
         dummy1 = self.dummy1EntryAssoc.getEntryText()
         dummy2 = self.dummy2EntryAssoc.getEntryText()
         dummy3 = self.dummy3EntryAssoc.getEntryText()
-        if not (answer and dummy1 and dummy2 and dummy3):
-            self.registerFailMsgBox('答えを入力してね！')
-            return False
-        comment = self.getComment()
-        stable = self.stable.get()
+        for s in (answer, dummy1, dummy2, dummy3):
+            if not s: raise ve.AnswerBlankError
         self._qdManip.registerAssoc(self.subGenreId, self.examGenreId,
             self.difficulty_min, self.difficulty_max,
             question1, question2, question3, question4, answer,
-            dummy1, dummy2, dummy3, self.assocTypeId, comment, stable, self.seriesId)
-        return True
+            dummy1, dummy2, dummy3, self.assocTypeId,
+            comment, stable, self.seriesId)
 
 
-    def registerSort(self):
-        question = self.validationCommon()
-        if not question:
-            return False
+    def registerSort(self, comment, stable):
+        question = self.getQuestion()
         answer = self.answerEntrySort.getEntryText()
         if not answer:
-            self.registerFailMsgBox('答えを入力してね！')
-            return False
-        comment = self.getComment()
-        stable = self.stable.get()
+            raise ve.AnswerBlankError
         self._qdManip.registerSort(self.subGenreId, self.examGenreId,
             self.difficulty_min, self.difficulty_max, question, answer,
             comment, stable, self.seriesId)
-        return True
 
 
-    def registerPanel(self):
-        question = self.validationCommon()
-        if not question:
-            return False
-        answer = self.answerEntryPanel.getEntryText()
-        if not answer:
-            self.registerFailMsgBox('答えを入力してね！')
-            return False
-        dummy = self.dummyEntryPanel.getEntryText()
-        if not dummy:
-            self.registerFailMsgBox('ダミー選択肢を入力してね！')
-        comment = self.getComment()
-        stable = self.stable.get()
+    def registerPanel(self, comment, stable):
+        question = self.getQuestion()
+
+        answerList = self.answerFramePanel.answer
+        answerLen = None
+        for answer in answerList:
+            if not answer:
+                raise ve.AnswerBlankError
+            if answerLen is None:
+                answerLen = len(answer)
+                continue
+            newAnswerLen = len(answer)
+            if answerLen != newAnswerLen:
+                raise ve.PanelLengthInconsistError
+            answerLen = newAnswerLen
+
+        panel = self.panelEntryPanel.getEntryText()
+        if not len(panel) in (8, 10):
+            raise ve.PanelLengthError
+
+        for answer in answerList:
+            for c in answer:
+                if not c in panel:
+                    raise ve.PanelNoAnswerError
+
+        answerStr = '\n'.join(answerList)
+
         self._qdManip.registerPanel(self.subGenreId, self.examGenreId,
-            self.difficulty_min, self.difficulty_max, question, answer, dummy,
+            self.difficulty_min, self.difficulty_max, question, answerStr, panel,
             comment, stable, self.seriesId)
-        return True
 
 
-    def registerSlot(self):
-        question = self.validationCommon()
-        if not question:
-            return False
+    def registerSlot(self, comment, stable):
+        question = self.getQuestion()
         answer = self.answerEntrySlot.getEntryText()
         dummy1 = self.dummy1EntrySlot.getEntryText()
         dummy2 = self.dummy2EntrySlot.getEntryText()
         dummy3 = self.dummy3EntrySlot.getEntryText()
-        if not (answer and dummy1 and dummy2 and dummy3):
-            self.registerFailMsgBox('答えを入力してね！')
-            return False
+        for s in (answer, dummy1, dummy2, dummy3):
+            if not s: raise ve.AnswerBlankError
         if not (len(answer) == len(dummy1) == len(dummy2) == len(dummy3)):
-            self.registerFailMsgBox('答えとダミーの文字数は全て同じにしてね！')
-            return
-        comment = self.getComment()
-        stable = self.stable.get()
+            raise ve.SlotStrLenError
         self._qdManip.registerSlot(self.subGenreId, self.examGenreId,
             self.difficulty_min, self.difficulty_max, question, answer,
             dummy1, dummy2, dummy3, comment, stable, self.seriesId)
-        return True
 
 
-    def afterRegisterSuccess(self):
+    def registerTyping(self, comment, stable):
+        question = self.getQuestion()
+        (typingtype, answer) = self.getTypingTypeAndAnswer()
+        self._qdManip.registerTyping(self.subGenreId, self.examGenreId,
+            self.difficulty_min, self.difficulty_max, question, typingtype,
+            answer, comment, stable, self.seriesId)
+
+
+    def registerCube(self, comment, stable):
+        question = self.getQuestion()
+        (typingtype, answer) = self.getTypingTypeAndAnswer()
+        self._qdManip.registerCube(self.subGenreId, self.examGenreId,
+            self.difficulty_min, self.difficulty_max, question, typingtype,
+            answer, comment, stable, self.seriesId)
+
+
+    def registerEffect(self, comment, stable):
+        question = self.getQuestion()
+        questionEffect = self.questionEntryEffect.getEntryText()
+        if not questionEffect:
+            raise ve.AnswerBlankError
+        (typingtype, answer) = self.getTypingTypeAndAnswer()
+        self._qdManip.registerEffect(self.subGenreId, self.examGenreId,
+            self.difficulty_min, self.difficulty_max, question, questionEffect,
+            typingtype, answer, comment, stable, self.seriesId)
+
+
+    def deleteQuestion(self):
+        for quizType in QuizType:
+            if quizType == QuizType.Assoc:
+                self.question1EntryAssoc.deleteEntryText()
+                self.question2EntryAssoc.deleteEntryText()
+                self.question3EntryAssoc.deleteEntryText()
+                self.question4EntryAssoc.deleteEntryText()
+            else:
+                questionFrame = eval('self.questionFrame%s' % quizType.name)
+                questionFrame.question = ''
+
+
+    def deleteComment(self):
+        self.commentText.delete('1.0', tk.END)
+
+
+    def deleteEachTextEntry(self):
         self.deleteQuestion()
         self.deleteComment()
         self.answerEntryFour.deleteEntryText()
         self.dummy1EntryFour.deleteEntryText()
         self.dummy2EntryFour.deleteEntryText()
         self.dummy3EntryFour.deleteEntryText()
-        self.question1EntryAssoc.deleteEntryText()
-        self.question2EntryAssoc.deleteEntryText()
-        self.question3EntryAssoc.deleteEntryText()
-        self.question4EntryAssoc.deleteEntryText()
         self.answerEntryAssoc.deleteEntryText()
         self.dummy1EntryAssoc.deleteEntryText()
         self.dummy2EntryAssoc.deleteEntryText()
         self.dummy3EntryAssoc.deleteEntryText()
         self.answerEntrySort.deleteEntryText()
-        self.answerEntryPanel.deleteEntryText()
-        self.dummyEntryPanel.deleteEntryText()
+        self.answerFramePanel.answer = ''
+        self.panelEntryPanel.deleteEntryText()
         self.answerEntrySlot.deleteEntryText()
         self.dummy1EntrySlot.deleteEntryText()
         self.dummy2EntrySlot.deleteEntryText()
         self.dummy3EntrySlot.deleteEntryText()
+        self.answerFrameTyping.answer = ''
+        self.answerEntryCube.deleteEntryText()
+        self.questionEntryEffect.deleteEntryText()
+        self.answerFrameEffect.answer = ''
 
 
 
