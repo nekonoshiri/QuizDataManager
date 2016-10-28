@@ -172,8 +172,19 @@ class QuestionDataDBManip(DBManip):
         )
 
 
-    def registerSlot(self):
-        pass
+    def registerSlot(self, subGenreId: int, examGenreId: int,
+            difficulty_min: int, difficulty_max: int, question: str,
+            answer: str, dummy1: str, dummy2: str, dummy3: str,
+            comment: str, stable: bool, seriesId: int):
+        self.insert(
+            'quiz_slot',
+            ['subgenre', 'examgenre', 'difficulty_min', 'difficulty_max',
+             'question', 'answer', 'dummy1', 'dummy2', 'dummy3',
+             'comment', 'stable', 'series'],
+            [subGenreId, examGenreId, difficulty_min, difficulty_max,
+             question, answer, dummy1, dummy2, dummy3,
+             comment, stable, seriesId]
+        )
 
 
     def registerTyping(self):

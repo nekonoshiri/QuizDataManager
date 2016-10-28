@@ -121,6 +121,9 @@ class Application(tk.Frame):
 # answerEntryPanel :: EntryFrame
 # dummyEntryPanel :: EntryFrame
 #
+# answerEntrySlot :: EntryFrame
+# dummy1EntrySlot, 2, 3 :: EntryFrame
+#
 # commentText
 #     self.getComment() :: str
 # difficulty_min :: int (default 1)
@@ -358,6 +361,19 @@ class Application(tk.Frame):
 
         self.questionFrameSlot = QuestionFrame(outerFrame)
         self.questionFrameSlot.pack()
+
+        self.answerEntrySlot = EntryFrame(outerFrame, text = '答え')
+        self.answerEntrySlot.pack()
+
+        self.dummy1EntrySlot = EntryFrame(outerFrame, text = 'ダミー１')
+        self.dummy1EntrySlot.pack()
+
+        self.dummy2EntrySlot = EntryFrame(outerFrame, text = 'ダミー２')
+        self.dummy2EntrySlot.pack()
+
+        self.dummy3EntrySlot = EntryFrame(outerFrame, text = 'ダミー３')
+        self.dummy3EntrySlot.pack()
+
         return outerFrame
 
 
@@ -629,6 +645,28 @@ class Application(tk.Frame):
         return True
 
 
+    def registerSlot(self):
+        question = self.validationCommon()
+        if not question:
+            return False
+        answer = self.answerEntrySlot.getEntryText()
+        dummy1 = self.dummy1EntrySlot.getEntryText()
+        dummy2 = self.dummy2EntrySlot.getEntryText()
+        dummy3 = self.dummy3EntrySlot.getEntryText()
+        if not (answer and dummy1 and dummy2 and dummy3):
+            self.registerFailMsgBox('答えを入力してね！')
+            return False
+        if not (len(answer) == len(dummy1) == len(dummy2) == len(dummy3)):
+            self.registerFailMsgBox('答えとダミーの文字数は全て同じにしてね！')
+            return
+        comment = self.getComment()
+        stable = self.stable.get()
+        self._qdManip.registerSlot(self.subGenreId, self.examGenreId,
+            self.difficulty_min, self.difficulty_max, question, answer,
+            dummy1, dummy2, dummy3, comment, stable, self.seriesId)
+        return True
+
+
     def afterRegisterSuccess(self):
         self.deleteQuestion()
         self.deleteComment()
@@ -647,6 +685,10 @@ class Application(tk.Frame):
         self.answerEntrySort.deleteEntryText()
         self.answerEntryPanel.deleteEntryText()
         self.dummyEntryPanel.deleteEntryText()
+        self.answerEntrySlot.deleteEntryText()
+        self.dummy1EntrySlot.deleteEntryText()
+        self.dummy2EntrySlot.deleteEntryText()
+        self.dummy3EntrySlot.deleteEntryText()
 
 
 

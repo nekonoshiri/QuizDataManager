@@ -108,3 +108,26 @@ foreign key(subgenre) references subgenre(id),
 foreign key(examgenre) references examgenre(id),
 foreign key(series) references series(id)
 );
+
+[Slot]
+create table quiz_slot(
+id integer primary key not null unique,
+subgenre integer not null,
+examgenre integer not null,
+difficulty_min integer not null check((1 <= difficulty_min) and (difficulty_min <= 5)) default 1,
+difficulty_max integer not null check((difficulty_min <= difficulty_max) and (difficulty_max <= 5)) default 5,
+question text not null unique,
+answer text not null,
+dummy1 text not null,
+dummy2 text not null,
+dummy3 text not null,
+comment text not null default '',
+stable integer not null check(stable in (0, 1)) default 0,
+appear_count integer not null check(0 <= appear_count) default 1,
+solve_count integer not null check((0 <= solve_count) and (solve_count <= appear_count)) default 0,
+accuracy integer not null check((0 <= accuracy) and (accuracy <= 100)) default 0,
+series integer not null,
+foreign key(subgenre) references subgenre(id),
+foreign key(examgenre) references examgenre(id),
+foreign key(series) references series(id)
+);
