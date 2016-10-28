@@ -148,12 +148,28 @@ class QuestionDataDBManip(DBManip):
         )
 
 
-    def registerSort(self):
-        pass
+    def registerSort(self, subGenreId: int, examGenreId: int,
+            difficulty_min: int, difficulty_max: int, question: str,
+            answer: str, comment: str, stable: bool, seriesId: int):
+        self.insert(
+            'quiz_sort',
+            ['subgenre', 'examgenre', 'difficulty_min', 'difficulty_max',
+             'question', 'answer', 'comment', 'stable', 'series'],
+            [subGenreId, examGenreId, difficulty_min, difficulty_max,
+             question, answer, comment, stable, seriesId]
+        )
 
 
-    def registerPanel(self):
-        pass
+    def registerPanel(self, subGenreId: int, examGenreId: int,
+            difficulty_min: int, difficulty_max: int, question: str,
+            answer: str, dummy: str, comment: str, stable: bool, seriesId: int):
+        self.insert(
+            'quiz_panel',
+            ['subgenre', 'examgenre', 'difficulty_min', 'difficulty_max',
+             'question', 'answer', 'dummy', 'comment', 'stable', 'series'],
+            [subGenreId, examGenreId, difficulty_min, difficulty_max,
+             question, answer, dummy, comment, stable, seriesId]
+        )
 
 
     def registerSlot(self):

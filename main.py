@@ -116,6 +116,11 @@ class Application(tk.Frame):
 # answerEntryAssoc :: EntryFrame
 # dummy1EntryAssoc, 2, 3, 4 :: EntryFrame
 #
+# answerEntrySort :: EntryFrame
+#
+# answerEntryPanel :: EntryFrame
+# dummyEntryPanel :: EntryFrame
+#
 # commentText
 #     self.getComment() :: str
 # difficulty_min :: int (default 1)
@@ -318,6 +323,7 @@ class Application(tk.Frame):
 
         # initialize
         (self.assocTypeId, assocTypeLabel['text']) = assocTypeList[0]
+
         return outerFrame
 
 
@@ -326,6 +332,10 @@ class Application(tk.Frame):
 
         self.questionFrameSort = QuestionFrame(outerFrame)
         self.questionFrameSort.pack()
+
+        self.answerEntrySort = EntryFrame(outerFrame, text = '答え')
+        self.answerEntrySort.pack()
+
         return outerFrame
 
 
@@ -334,6 +344,12 @@ class Application(tk.Frame):
 
         self.questionFramePanel = QuestionFrame(outerFrame)
         self.questionFramePanel.pack()
+
+        self.answerEntryPanel = EntryFrame(outerFrame, text = '答え')
+        self.answerEntryPanel.pack()
+
+        self.dummyEntryPanel = EntryFrame(outerFrame, text = 'ダミー選択肢（答えを除く）')
+        self.dummyEntryPanel.pack()
         return outerFrame
 
 
@@ -578,6 +594,41 @@ class Application(tk.Frame):
         return True
 
 
+    def registerSort(self):
+        question = self.validationCommon()
+        if not question:
+            return False
+        answer = self.answerEntrySort.getEntryText()
+        if not answer:
+            self.registerFailMsgBox('答えを入力してね！')
+            return False
+        comment = self.getComment()
+        stable = self.stable.get()
+        self._qdManip.registerSort(self.subGenreId, self.examGenreId,
+            self.difficulty_min, self.difficulty_max, question, answer,
+            comment, stable, self.seriesId)
+        return True
+
+
+    def registerPanel(self):
+        question = self.validationCommon()
+        if not question:
+            return False
+        answer = self.answerEntryPanel.getEntryText()
+        if not answer:
+            self.registerFailMsgBox('答えを入力してね！')
+            return False
+        dummy = self.dummyEntryPanel.getEntryText()
+        if not dummy:
+            self.registerFailMsgBox('ダミー選択肢を入力してね！')
+        comment = self.getComment()
+        stable = self.stable.get()
+        self._qdManip.registerPanel(self.subGenreId, self.examGenreId,
+            self.difficulty_min, self.difficulty_max, question, answer, dummy,
+            comment, stable, self.seriesId)
+        return True
+
+
     def afterRegisterSuccess(self):
         self.deleteQuestion()
         self.deleteComment()
@@ -593,6 +644,9 @@ class Application(tk.Frame):
         self.dummy1EntryAssoc.deleteEntryText()
         self.dummy2EntryAssoc.deleteEntryText()
         self.dummy3EntryAssoc.deleteEntryText()
+        self.answerEntrySort.deleteEntryText()
+        self.answerEntryPanel.deleteEntryText()
+        self.dummyEntryPanel.deleteEntryText()
 
 
 
