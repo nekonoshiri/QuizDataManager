@@ -105,28 +105,29 @@ class QuestionDataDBManip(DBManip):
 
     def registerOX(self, subGenreId: int, examGenreId: int,
             difficulty_min: int, difficulty_max: int, question: str,
-            answer: bool, comment: str, stable: bool, seriesId: int):
+            answer: bool, comment: str, stable: bool, seriesId: int,
+            pictureId: int):
         self.insert(
             'quiz_ox',
             ['subgenre', 'examgenre', 'difficulty_min', 'difficulty_max',
-             'question', 'answer', 'comment', 'stable', 'series'],
+             'question', 'answer', 'comment', 'stable', 'series', 'picture_id'],
             [subGenreId, examGenreId, difficulty_min, difficulty_max,
-             question, answer, comment, stable, seriesId]
+             question, answer, comment, stable, seriesId, pictureId]
         )
 
 
     def registerFour(self, subGenreId: int, examGenreId: int,
             difficulty_min: int, difficulty_max: int, question: str, answer: str,
             dummy1: str, dummy2: str, dummy3: str,
-            comment: str, stable: bool, seriesId: int):
+            comment: str, stable: bool, seriesId: int, pictureId: int):
         self.insert(
             'quiz_four',
             ['subgenre', 'examgenre', 'difficulty_min', 'difficulty_max',
              'question', 'answer', 'dummy1', 'dummy2', 'dummy3',
-             'comment', 'stable', 'series'],
+             'comment', 'stable', 'series', 'picture_id'],
             [subGenreId, examGenreId, difficulty_min, difficulty_max,
              question, answer, dummy1, dummy2, dummy3,
-             comment, stable, seriesId]
+             comment, stable, seriesId, pictureId]
         )
 
 
@@ -134,95 +135,102 @@ class QuestionDataDBManip(DBManip):
             difficulty_min: int, difficulty_max: int,
             question1: str, question2: str, question3: str, question4:str,
             answer: str, dummy1: str, dummy2: str, dummy3: str, assoctype: int,
-            comment: str, stable: bool, seriesId: int):
+            comment: str, stable: bool, seriesId: int, pictureId: int):
         self.insert(
             'quiz_assoc',
             ['subgenre', 'examgenre', 'difficulty_min', 'difficulty_max',
              'question1', 'question2', 'question3', 'question4',
              'answer', 'dummy1', 'dummy2', 'dummy3', 'assoctype',
-             'comment', 'stable', 'series'],
+             'comment', 'stable', 'series', 'picture_id'],
             [subGenreId, examGenreId, difficulty_min, difficulty_max,
              question1, question2, question3, question4,
              answer, dummy1, dummy2, dummy3, assoctype,
-             comment, stable, seriesId]
+             comment, stable, seriesId, pictureId]
         )
 
 
     def registerSort(self, subGenreId: int, examGenreId: int,
             difficulty_min: int, difficulty_max: int, question: str,
-            answer: str, comment: str, stable: bool, seriesId: int):
+            answer: str, comment: str, stable: bool, seriesId: int,
+            pictureId: int):
         self.insert(
             'quiz_sort',
             ['subgenre', 'examgenre', 'difficulty_min', 'difficulty_max',
-             'question', 'answer', 'comment', 'stable', 'series'],
+             'question', 'answer', 'comment', 'stable', 'series', 'picture_id'],
             [subGenreId, examGenreId, difficulty_min, difficulty_max,
-             question, answer, comment, stable, seriesId]
+             question, answer, comment, stable, seriesId, pictureId]
         )
 
 
     def registerPanel(self, subGenreId: int, examGenreId: int,
             difficulty_min: int, difficulty_max: int, question: str,
-            answer: str, panel: str, comment: str, stable: bool, seriesId: int):
+            answer: str, panel: str, comment: str, stable: bool, seriesId: int,
+            pictureId: int):
         self.insert(
             'quiz_panel',
             ['subgenre', 'examgenre', 'difficulty_min', 'difficulty_max',
-             'question', 'answer', 'panel', 'comment', 'stable', 'series'],
+             'question', 'answer', 'panel', 'comment', 'stable', 'series',
+             'picture_id'],
             [subGenreId, examGenreId, difficulty_min, difficulty_max,
-             question, answer, panel, comment, stable, seriesId]
+             question, answer, panel, comment, stable, seriesId, pictureId]
         )
 
 
     def registerSlot(self, subGenreId: int, examGenreId: int,
             difficulty_min: int, difficulty_max: int, question: str,
             answer: str, dummy1: str, dummy2: str, dummy3: str,
-            comment: str, stable: bool, seriesId: int):
+            comment: str, stable: bool, seriesId: int, pictureId: int):
         self.insert(
             'quiz_slot',
             ['subgenre', 'examgenre', 'difficulty_min', 'difficulty_max',
              'question', 'answer', 'dummy1', 'dummy2', 'dummy3',
-             'comment', 'stable', 'series'],
+             'comment', 'stable', 'series', 'picture_id'],
             [subGenreId, examGenreId, difficulty_min, difficulty_max,
              question, answer, dummy1, dummy2, dummy3,
-             comment, stable, seriesId]
+             comment, stable, seriesId, pictureId]
         )
 
 
     def registerTyping(self, subGenreId: int, examGenreId: int,
-            difficulty_min: int, difficulty_max: int, question: str, typingtype: int,
-            answer: str, comment: str, stable: bool, seriesId: int):
+            difficulty_min: int, difficulty_max: int, question: str,
+            typingtype: int, answer: str, comment: str, stable: bool,
+            seriesId: int, pictureId: int):
         self.insert(
             'quiz_typing',
             ['subgenre', 'examgenre', 'difficulty_min', 'difficulty_max',
-             'question', 'typingtype', 'answer', 'comment', 'stable', 'series'],
+             'question', 'typingtype', 'answer', 'comment', 'stable', 'series',
+             'picture_id'],
             [subGenreId, examGenreId, difficulty_min, difficulty_max,
-             question, typingtype, answer, comment, stable, seriesId]
+             question, typingtype, answer, comment, stable, seriesId, pictureId]
         )
 
 
     def registerCube(self, subGenreId: int, examGenreId: int,
-            difficulty_min: int, difficulty_max: int, question: str, typingtype: int,
-            answer: str, comment: str, stable: bool, seriesId: int):
+            difficulty_min: int, difficulty_max: int, question: str,
+            typingtype: int, answer: str, comment: str, stable: bool,
+            seriesId: int, pictureId: int):
         self.insert(
             'quiz_cube',
             ['subgenre', 'examgenre', 'difficulty_min', 'difficulty_max',
-             'question', 'typingtype', 'answer', 'comment', 'stable', 'series'],
+             'question', 'typingtype', 'answer', 'comment', 'stable', 'series',
+             'picture_id'],
             [subGenreId, examGenreId, difficulty_min, difficulty_max,
-             question, typingtype, answer, comment, stable, seriesId]
+             question, typingtype, answer, comment, stable, seriesId, pictureId]
         )
 
 
     def registerEffect(self, subGenreId: int, examGenreId: int,
             difficulty_min: int, difficulty_max: int,
             question: str, questionEffect: str, typingtype: int, answer: str,
-            comment: str, stable: bool, seriesId: int):
+            comment: str, stable: bool, seriesId: int, pictureId: int):
         self.insert(
             'quiz_effect',
             ['subgenre', 'examgenre', 'difficulty_min', 'difficulty_max',
-             'question', 'questionEffect',
-             'typingtype', 'answer', 'comment', 'stable', 'series'],
+             'question', 'questionEffect', 'typingtype',
+             'answer', 'comment', 'stable', 'series', 'picture_id'],
             [subGenreId, examGenreId, difficulty_min, difficulty_max,
-             question, questionEffect,
-             typingtype, answer, comment, stable, seriesId]
+             question, questionEffect, typingtype,
+             answer, comment, stable, seriesId, pictureId]
         )
 
 

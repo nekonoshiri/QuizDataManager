@@ -1,5 +1,3 @@
-
-
 class MojiUtil(object):
     hankakuList = '0123456789'\
         'abcdefghijklmnopqrstuvwxyz'\

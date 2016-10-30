@@ -33,6 +33,11 @@ class AnswerBlankError(ValidationError):
         super().__init__('答えを入力してね！')
 
 
+class InvalidPictureIdError(ValidationError):
+    def __init__(self):
+        super().__init__('画像IDは整数値を入力してね！')
+
+
 class PanelLengthError(ValidationError):
     def __init__(self):
         super().__init__('パネルの数は8枚か10枚にしてね！')

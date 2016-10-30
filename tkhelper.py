@@ -124,6 +124,18 @@ class ListboxIdd(tk.Listbox):
             return sil[0]
 
 
+    def select(self, selectId, throw = False):
+        self.select_clear(0, tk.END)
+        for (ix, item) in enumerate(self._iddList):
+            if item[0] == selectId:
+                self.select_set(ix)
+                self.event_generate('<<ListboxSelect>>')
+                return
+        if throw:
+            raise KeyError("selectId '%s' not found" % selectId)
+
+
+
 class ComboboxIdd(ttk.Combobox):
     def __init__(self, master, **option):
         iddList = option.pop('iddList', [])
