@@ -5,8 +5,8 @@ import tkinter as tk
 import tkinter.ttk as ttk
 from tkinter import messagebox
 from tkinter.scrolledtext import ScrolledText
-import re
 
+from tkcommon import QuestionFrame, AnswerTextFrame, EntryFrame, QuestionFrame
 from tkhelper import ListboxIdd, ComboboxIdd
 from dbmanip import QuestionDataDBManip
 from mojiutil import MojiUtil
@@ -26,44 +26,6 @@ class AssocType(IntEnum):
     OrderFixed = 1
     Random3 = 2
     Random4 = 3
-
-
-class QuestionFrame(tk.LabelFrame):
-    def __init__(self, master, **option):
-        super().__init__(master, **option)
-        self['text'] = '問題'
-        self.questionText = ScrolledText(self, height = 5)
-        self.questionText.pack()
-        formatButton = tk.Button(self, text = '整形')
-        formatButton['command'] = self.formatQuestion
-        formatButton.pack(anchor = tk.E)
-
-
-    @property
-    def question(self):
-        return self.questionText.get('1.0', tk.END).strip()
-
-
-    @question.setter
-    def question(self, question):
-        self.questionText.delete('1.0', tk.END)
-        self.questionText.insert(tk.END, question.strip())
-
-
-    def formatQuestion(self):
-        question = self.question
-        # 文中の空白類文字の削除
-        question = ''.join(question.split())
-        transdict = str.maketrans(',，.．!?', '、、。。！？')
-        question = question.translate(transdict)
-        # 数字１文字は全角，２文字以上は半角
-        question = re.sub('\d',
-            lambda obj: MojiUtil.toZenkaku(obj.group(0)), question
-        )
-        question = re.sub('\d\d+',
-            lambda obj: MojiUtil.toHankaku(obj.group(0)), question
-        )
-        self.question = question
 
 
 
