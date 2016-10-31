@@ -2,6 +2,8 @@ from copy import deepcopy
 import tkinter as tk
 import tkinter.ttk as ttk
 
+from util import findIndex
+
 
 class ListboxIdd(tk.Listbox):
     def __init__(self, master, **option):
@@ -126,13 +128,13 @@ class ListboxIdd(tk.Listbox):
 
     def select(self, selectId, throw = False):
         self.select_clear(0, tk.END)
-        for (ix, item) in enumerate(self._iddList):
-            if item[0] == selectId:
-                self.select_set(ix)
-                self.event_generate('<<ListboxSelect>>')
-                return
-        if throw:
-            raise KeyError("selectId '%s' not found" % selectId)
+        try:
+            ix = findIndex(lambda item: item[0] == selectId,
+                self._iddList, True)
+            self.select_set(ix)
+            self.event_generate('<<ListboxSelect>>')
+        except ValueError:
+            if throw: raise KeyError("selectId '%s' not found" % selectId)
 
 
 
