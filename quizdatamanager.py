@@ -90,9 +90,8 @@ class QuizDataManager(tk.Frame):
     def __makeRecorderList(self):
         from recorder import Recorder
         self.__recorderList = []
-        for recorder in Recorder.__subclasses__():
+        for recorder in Recorder.RecorderList:
             self.__recorderList.append(recorder(self.__qdManip))
-        self.__recorderList.sort(key = lambda r: r.tabOrder)
 
 
     def __createWidgets(self):

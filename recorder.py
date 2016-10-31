@@ -25,14 +25,19 @@ class AssocType(IntEnum):
 
 
 
+def recorder(cls):
+    '''decorator: register RecorderXXXX to Recorder.RecorderList'''
+    Recorder.RecorderList.append(cls)
+    return cls
+
+
+
 class Recorder(object, metaclass = ABCMeta):
+    RecorderList = []
+
+
     def __init__(self, qdManip):
         self._qdManip = qdManip
-
-
-    @property
-    @abstractmethod
-    def tabOrder(self): pass
 
 
     @property
@@ -84,16 +89,12 @@ class Recorder(object, metaclass = ABCMeta):
 
 
 
+@recorder
 class RecorderOX(Recorder):
     def __init__(self, qdManip):
         super().__init__(qdManip)
         self._answerVar = tk.BooleanVar()
         self._answer = True
-
-
-    @property
-    def tabOrder(self):
-        return 1
 
 
     @property
@@ -144,12 +145,8 @@ class RecorderOX(Recorder):
 
 
 
+@recorder
 class RecorderFour(Recorder):
-    @property
-    def tabOrder(self):
-        return 2
-
-
     @property
     def quizName(self):
         return '四択'
@@ -198,12 +195,8 @@ class RecorderFour(Recorder):
 
 
 
+@recorder
 class RecorderAssoc(Recorder):
-    @property
-    def tabOrder(self):
-        return 3
-
-
     @property
     def quizName(self):
         return '連想'
@@ -296,12 +289,8 @@ class RecorderAssoc(Recorder):
 
 
 
+@recorder
 class RecorderSort(Recorder):
-    @property
-    def tabOrder(self):
-        return 4
-
-
     @property
     def quizName(self):
         return '並べ替え'
@@ -338,12 +327,8 @@ class RecorderSort(Recorder):
 
 
 
+@recorder
 class RecorderPanel(Recorder):
-    @property
-    def tabOrder(self):
-        return 5
-
-
     @property
     def quizName(self):
         return '文字パネル'
@@ -407,12 +392,8 @@ class RecorderPanel(Recorder):
 
 
 
+@recorder
 class RecorderSlot(Recorder):
-    @property
-    def tabOrder(self):
-        return 6
-
-
     @property
     def quizName(self):
         return 'スロット'
@@ -463,12 +444,8 @@ class RecorderSlot(Recorder):
 
 
 
+@recorder
 class RecorderTyping(Recorder):
-    @property
-    def tabOrder(self):
-        return 7
-
-
     @property
     def quizName(self):
         return 'タイピング'
@@ -503,12 +480,8 @@ class RecorderTyping(Recorder):
 
 
 
+@recorder
 class RecorderCube(Recorder):
-    @property
-    def tabOrder(self):
-        return 8
-
-
     @property
     def quizName(self):
         return 'キューブ'
@@ -543,12 +516,8 @@ class RecorderCube(Recorder):
 
 
 
+@recorder
 class RecorderEffect(Recorder):
-    @property
-    def tabOrder(self):
-        return 9
-
-
     @property
     def quizName(self):
         return 'エフェクト'
