@@ -20,7 +20,8 @@ class QuizDataManager(tk.Frame):
 
 
 # Instance Variables
-# __qdManip, __master, __stableVar, __recorderList :: __init__
+# __qdManip, __master, __stableVar :: __init__
+# __recorderList :: __makeRecorderList
 # __mainNbook :: __createMainNotebook
 # __pictureIdEF, __commentText :: __createSupplementalFrame
 
@@ -89,9 +90,9 @@ class QuizDataManager(tk.Frame):
 
     def __makeRecorderList(self):
         from recorder import Recorder
-        self.__recorderList = []
-        for recorder in Recorder.RecorderList:
-            self.__recorderList.append(recorder(self.__qdManip))
+        self.__recorderList = map(
+            lambda R: R(self.__qdManip), Recorder.RecorderList
+        )
 
 
     def __createWidgets(self):
