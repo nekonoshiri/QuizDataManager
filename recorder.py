@@ -1140,3 +1140,118 @@ class RecorderConnect(Recorder):
 
 
 
+@recorder
+class RecorderMulti(Recorder):
+    @property
+    def quizName(self):
+        return '一問多答'
+
+
+    def recordationFrame(self):
+        def onMultiTypeBoxSelect(evt):
+            (self._multiTypeId, multiTypeStr) = self._multiTypeBox.selectedIdd
+            multiTypeLabel['text'] = multiTypeStr
+
+        outerFrame = tk.Frame()
+
+        self._questionFrame = QuestionFrame(outerFrame)
+        self._questionFrame.pack()
+        topFrame = tk.Frame(outerFrame)
+        topFrame.pack()
+        self._answerFrame = AnswerTextFrame(topFrame)
+        self._answerFrame['text'] = '答え'
+        self._answerFrame.answerText['width'] = 40
+        self._answerFrame.pack(side = tk.LEFT)
+        self._dummyFrame = AnswerTextFrame(topFrame)
+        self._dummyFrame['text'] = 'ダミー'
+        self._dummyFrame.answerText['width'] = 40
+        self._dummyFrame.pack(side = tk.LEFT)
+
+        bottomFrame = tk.LabelFrame(outerFrame, text = '問題タイプ')
+        bottomFrame.pack()
+        self._multiTypeBox = ListboxIdd(bottomFrame, height = 3)
+        self._multiTypeBox.iddList = self._qdManip.getMultiTypeList()
+        self._multiTypeBox.onSelect = onMultiTypeBoxSelect
+        self._multiTypeBox.pack()
+        multiTypeLabel = tk.Label(bottomFrame, bg = 'LightPink')
+        multiTypeLabel.pack()
+
+        # initialize
+        self._multiTypeBox.select(MultiType.Unknown)
+
+        return outerFrame
+
+
+    def record(self, comment, stable, pictureId):
+        qdm = QuizDataManager
+        question = self._questionFrame.question
+        if not question:
+            raise ve.QuestionBlankError
+        answerList = self._answerFrame.answer
+        dummyList = self._dummyFrame.answer
+        if (not answerList) or (not dummyList):
+            raise ve.AnswerBlankError
+        answerStr = '\n'.join(answerList)
+        dummyStr = '\n'.join(dummyList)
+        self._qdManip.registerMulti(qdm.subGenreId, qdm.examGenreId,
+            qdm.difficulty_min, qdm.difficulty_max, question,
+            answerStr, dummyStr,
+            self._multiTypeId, comment, stable, qdm.seriesId, pictureId)
+
+
+    def search(self):
+        question = self._questionFrame.question
+        questionHead = question[:4]
+        answerList = self._answerFrame.answer
+        dummyList = self._dummyFrame.answer
+        condList = []
+        if question:
+            condList.append("question like '{}%'".format(questionHead))
+        if answerList:
+            for answer in answerList:
+                condList.extend([
+                    s.format(answer) for s in
+                    [
+                        "answer like '%\n{0}\n%'", "answer like '{0}\n%'",
+                        "answer like '%\n{0}'", "answer like '{0}'"
+                    ]
+                ])
+        if dummyList:
+            for dummy in dummyList:
+                condList.extend([
+                    s.format(dummy) for s in
+                    [
+                        "dummy like '%\n{0}\n%'", "dummy like '{0}\n%'",
+                        "dummy like '%\n{0}'", "dummy like '{0}'"
+                    ]
+                ])
+        cond = 'where ' + ' or '.join(condList) if condList else ''
+
+        header = [(
+            'ID', 'ジャンル', 'サブジャンル', '検定ジャンル',
+            '☆下限', '☆上限', '問題', '答え', 'ダミー', '問題タイプ',
+            'コメント', '安定性', 'シリーズ', '画像ID'
+        )]
+        result = self.selectFromJoinedTable(
+            'quiz_multi',
+            [
+                'quiz_multi.id', 'genre.genre', 'subgenre.subgenre',
+                'examgenre.examgenre',
+                'difficulty_min', 'difficulty_max', 'question',
+                'answer', 'dummy', 'multitype.multitype',
+                'comment', 'stable.stable', 'series.series', 'picture_id'
+            ],
+            cond,
+            multiType = True
+        )
+        return header + result
+
+
+    def cleanUp(self):
+        self._questionFrame.question = ''
+        self._answerFrame.answer = ''
+        self._dummyFrame.answer = ''
+        self._multiTypeBox.select(MultiType.Unknown)
+
+
+
