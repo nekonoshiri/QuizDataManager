@@ -1,26 +1,11 @@
-[OX]
-create table quiz_ox(
-id integer primary key not null unique,
-subgenre integer not null,
-examgenre integer not null,
-difficulty_min integer not null check((1 <= difficulty_min) and (difficulty_min <= 5)) default 1,
-difficulty_max integer not null check((difficulty_min <= difficulty_max) and (difficulty_max <= 5)) default 5,
-question text not null unique,
-answer integer not null check(answer in (0, 1)),
-comment text not null default '',
-stable integer not null check(stable in (0, 1)) default 0,
-appear_count integer not null check(0 <= appear_count) default 1,
-solve_count integer not null check((0 <= solve_count) and (solve_count <= appear_count)) default 0,
-accuracy integer not null check((0 <= accuracy) and (accuracy <= 100)) default 0,
-series integer not null,
-picture_id integer,
-foreign key(subgenre) references subgenre(id),
-foreign key(examgenre) references examgenre(id),
-foreign key(series) references series(id)
-);
+[multitype]
+create table multitype(id integer primary key not null unique, multitype text not null unique);
+insert into multitype values(0, '不明');
+insert into multitype values(1, '固定');
+insert into multitype values(2, '非固定');
 
-[Four]
-create table quiz_four(
+[Order]
+create table quiz_order(
 id integer primary key not null unique,
 subgenre integer not null,
 examgenre integer not null,
@@ -28,37 +13,7 @@ difficulty_min integer not null check((1 <= difficulty_min) and (difficulty_min 
 difficulty_max integer not null check((difficulty_min <= difficulty_max) and (difficulty_max <= 5)) default 5,
 question text not null unique,
 answer text not null,
-dummy1 text not null,
-dummy2 text not null,
-dummy3 text not null,
-comment text not null default '',
-stable integer not null check(stable in (0, 1)) default 0,
-appear_count integer not null check(0 <= appear_count) default 1,
-solve_count integer not null check((0 <= solve_count) and (solve_count <= appear_count)) default 0,
-accuracy integer not null check((0 <= accuracy) and (accuracy <= 100)) default 0,
-series integer not null,
-picture_id integer,
-foreign key(subgenre) references subgenre(id),
-foreign key(examgenre) references examgenre(id),
-foreign key(series) references series(id)
-);
-
-[Assoc]
-create table quiz_assoc(
-id integer primary key not null unique,
-subgenre integer not null,
-examgenre integer not null,
-difficulty_min integer not null check((1 <= difficulty_min) and (difficulty_min <= 5)) default 1,
-difficulty_max integer not null check((difficulty_min <= difficulty_max) and (difficulty_max <= 5)) default 5,
-question1 text not null,
-question2 text not null,
-question3 text not null,
-question4 text not null,
-answer text not null,
-dummy1 text not null,
-dummy2 text not null,
-dummy3 text not null,
-assoctype integer not null,
+multitype integer not null,
 comment text not null default '',
 stable integer not null check(stable in (0, 1)) default 0,
 appear_count integer not null check(0 <= appear_count) default 1,
@@ -69,11 +24,84 @@ picture_id integer,
 foreign key(subgenre) references subgenre(id),
 foreign key(examgenre) references examgenre(id),
 foreign key(series) references series(id),
-foreign key(assoctype) references assoctype(id)
+foreign key(multitype) references multitype(id)
 );
 
-[Sort]
-create table quiz_sort(
+[Connect]
+create table quiz_connect(
+id integer primary key not null unique,
+subgenre integer not null,
+examgenre integer not null,
+difficulty_min integer not null check((1 <= difficulty_min) and (difficulty_min <= 5)) default 1,
+difficulty_max integer not null check((difficulty_min <= difficulty_max) and (difficulty_max <= 5)) default 5,
+question text not null unique,
+option_left text not null,
+option_right text not null,
+multitype integer not null,
+comment text not null default '',
+stable integer not null check(stable in (0, 1)) default 0,
+appear_count integer not null check(0 <= appear_count) default 1,
+solve_count integer not null check((0 <= solve_count) and (solve_count <= appear_count)) default 0,
+accuracy integer not null check((0 <= accuracy) and (accuracy <= 100)) default 0,
+series integer not null,
+picture_id integer,
+foreign key(subgenre) references subgenre(id),
+foreign key(examgenre) references examgenre(id),
+foreign key(series) references series(id),
+foreign key(multitype) references multitype(id)
+);
+
+[Multi]
+create table quiz_multi(
+id integer primary key not null unique,
+subgenre integer not null,
+examgenre integer not null,
+difficulty_min integer not null check((1 <= difficulty_min) and (difficulty_min <= 5)) default 1,
+difficulty_max integer not null check((difficulty_min <= difficulty_max) and (difficulty_max <= 5)) default 5,
+question text not null unique,
+answer text not null,
+dummy text not null,
+multitype integer not null,
+comment text not null default '',
+stable integer not null check(stable in (0, 1)) default 0,
+appear_count integer not null check(0 <= appear_count) default 1,
+solve_count integer not null check((0 <= solve_count) and (solve_count <= appear_count)) default 0,
+accuracy integer not null check((0 <= accuracy) and (accuracy <= 100)) default 0,
+series integer not null,
+picture_id integer,
+foreign key(subgenre) references subgenre(id),
+foreign key(examgenre) references examgenre(id),
+foreign key(series) references series(id),
+foreign key(multitype) references multitype(id)
+);
+
+[Group]
+create table quiz_group(
+id integer primary key not null unique,
+subgenre integer not null,
+examgenre integer not null,
+difficulty_min integer not null check((1 <= difficulty_min) and (difficulty_min <= 5)) default 1,
+difficulty_max integer not null check((difficulty_min <= difficulty_max) and (difficulty_max <= 5)) default 5,
+question text not null unique,
+group1 text not null,
+group2 text not null,
+group3 text not null,
+multitype integer not null,
+comment text not null default '',
+stable integer not null check(stable in (0, 1)) default 0,
+appear_count integer not null check(0 <= appear_count) default 1,
+solve_count integer not null check((0 <= solve_count) and (solve_count <= appear_count)) default 0,
+accuracy integer not null check((0 <= accuracy) and (accuracy <= 100)) default 0,
+series integer not null,
+picture_id integer,
+foreign key(subgenre) references subgenre(id),
+foreign key(examgenre) references examgenre(id),
+foreign key(series) references series(id),
+foreign key(multitype) references multitype(id)
+);
+
+[FirstCome]
+create table quiz_firstcome(
 id integer primary key not null unique,
 subgenre integer not null,
 examgenre integer not null,
@@ -93,16 +121,14 @@ foreign key(examgenre) references examgenre(id),
 foreign key(series) references series(id)
 );
 
-[Panel]
-create table quiz_panel(
+[ImageTouch]
+create table quiz_imagetouch(
 id integer primary key not null unique,
 subgenre integer not null,
 examgenre integer not null,
 difficulty_min integer not null check((1 <= difficulty_min) and (difficulty_min <= 5)) default 1,
 difficulty_max integer not null check((difficulty_min <= difficulty_max) and (difficulty_max <= 5)) default 5,
 question text not null unique,
-answer text not null,
-panel text not null,
 comment text not null default '',
 stable integer not null check(stable in (0, 1)) default 0,
 appear_count integer not null check(0 <= appear_count) default 1,
@@ -110,97 +136,7 @@ solve_count integer not null check((0 <= solve_count) and (solve_count <= appear
 accuracy integer not null check((0 <= accuracy) and (accuracy <= 100)) default 0,
 series integer not null,
 picture_id integer,
-foreign key(subgenre) references subgenre(id),
-foreign key(examgenre) references examgenre(id),
-foreign key(series) references series(id)
-);
-
-[Slot]
-create table quiz_slot(
-id integer primary key not null unique,
-subgenre integer not null,
-examgenre integer not null,
-difficulty_min integer not null check((1 <= difficulty_min) and (difficulty_min <= 5)) default 1,
-difficulty_max integer not null check((difficulty_min <= difficulty_max) and (difficulty_max <= 5)) default 5,
-question text not null unique,
-answer text not null,
-dummy1 text not null,
-dummy2 text not null,
-dummy3 text not null,
-comment text not null default '',
-stable integer not null check(stable in (0, 1)) default 0,
-appear_count integer not null check(0 <= appear_count) default 1,
-solve_count integer not null check((0 <= solve_count) and (solve_count <= appear_count)) default 0,
-accuracy integer not null check((0 <= accuracy) and (accuracy <= 100)) default 0,
-series integer not null,
-picture_id integer,
-foreign key(subgenre) references subgenre(id),
-foreign key(examgenre) references examgenre(id),
-foreign key(series) references series(id)
-);
-
-[Typing]
-create table quiz_typing(
-id integer primary key not null unique,
-subgenre integer not null,
-examgenre integer not null,
-difficulty_min integer not null check((1 <= difficulty_min) and (difficulty_min <= 5)) default 1,
-difficulty_max integer not null check((difficulty_min <= difficulty_max) and (difficulty_max <= 5)) default 5,
-question text not null unique,
-typingtype integer not null,
-answer text not null,
-comment text not null default '',
-stable integer not null check(stable in (0, 1)) default 0,
-appear_count integer not null check(0 <= appear_count) default 1,
-solve_count integer not null check((0 <= solve_count) and (solve_count <= appear_count)) default 0,
-accuracy integer not null check((0 <= accuracy) and (accuracy <= 100)) default 0,
-series integer not null,
-picture_id integer,
-foreign key(subgenre) references subgenre(id),
-foreign key(examgenre) references examgenre(id),
-foreign key(series) references series(id)
-);
-
-[Cube]
-create table quiz_cube(
-id integer primary key not null unique,
-subgenre integer not null,
-examgenre integer not null,
-difficulty_min integer not null check((1 <= difficulty_min) and (difficulty_min <= 5)) default 1,
-difficulty_max integer not null check((difficulty_min <= difficulty_max) and (difficulty_max <= 5)) default 5,
-question text not null unique,
-typingtype integer not null,
-answer text not null,
-comment text not null default '',
-stable integer not null check(stable in (0, 1)) default 0,
-appear_count integer not null check(0 <= appear_count) default 1,
-solve_count integer not null check((0 <= solve_count) and (solve_count <= appear_count)) default 0,
-accuracy integer not null check((0 <= accuracy) and (accuracy <= 100)) default 0,
-series integer not null,
-picture_id integer,
-foreign key(subgenre) references subgenre(id),
-foreign key(examgenre) references examgenre(id),
-foreign key(series) references series(id)
-);
-
-[Effect]
-create table quiz_effect(
-id integer primary key not null unique,
-subgenre integer not null,
-examgenre integer not null,
-difficulty_min integer not null check((1 <= difficulty_min) and (difficulty_min <= 5)) default 1,
-difficulty_max integer not null check((difficulty_min <= difficulty_max) and (difficulty_max <= 5)) default 5,
-question text not null,
-questionEffect text not null,
-typingtype integer not null,
-answer text not null,
-comment text not null default '',
-stable integer not null check(stable in (0, 1)) default 0,
-appear_count integer not null check(0 <= appear_count) default 1,
-solve_count integer not null check((0 <= solve_count) and (solve_count <= appear_count)) default 0,
-accuracy integer not null check((0 <= accuracy) and (accuracy <= 100)) default 0,
-series integer not null,
-picture_id integer,
+picture_answer_id integer,
 foreign key(subgenre) references subgenre(id),
 foreign key(examgenre) references examgenre(id),
 foreign key(series) references series(id)

@@ -56,7 +56,7 @@ class AnswerTextFrame(tk.LabelFrame):
     def answer(self):
         answerStr = self.answerText.get('1.0', tk.END).strip()
         answerList = answerStr.split('\n')
-        return [ans.strip() for ans in answerList]
+        return [ans.strip() for ans in answerList if ans.strip()]
 
 
     @answer.setter

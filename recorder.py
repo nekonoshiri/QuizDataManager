@@ -25,6 +25,13 @@ class AssocType(IntEnum):
 
 
 
+class MultiType(IntEnum):
+    Unknown = 0
+    Fixed = 1
+    Unfixed = 2
+
+
+
 def recorder(cls):
     '''decorator: register RecorderXXXX to Recorder.RecorderList'''
     Recorder.RecorderList.append(cls)
@@ -74,15 +81,12 @@ class Recorder(object, metaclass = ABCMeta):
                 raise ve.TypingTypeInconsistError
 
         answerList = [str.upper(MojiUtil.toHankaku(ans)) for ans in rowAnswerList]
-        typingType = None
+        if not answerList:
+            raise ve.AnswerBlankError
+        typingType = getTypingType(answerList[0])
         for answer in answerList:
-            if not answer:
-                raise ve.AnswerBlankError
             if len(answer) > 8:
                 raise ve.AnswerLengthOverError
-            if typingType is None:
-                typingType = getTypingType(answer)
-                continue
             newTypingType = getTypingType(answer)
             if typingType != newTypingType:
                 raise ve.TypingTypeInconsistError
@@ -93,7 +97,8 @@ class Recorder(object, metaclass = ABCMeta):
 
 
     #for search
-    def selectFromJoinedTable(self, table, columns, cond = '', params = []):
+    def selectFromJoinedTable(self, table, columns, cond = '', params = [],
+            assocType = False, multiType = False):
         joinedTable = '''(((({0}
         inner join subgenre on {0}.subgenre = subgenre.id)
         inner join genre on subgenre.genre = genre.id)
@@ -101,6 +106,14 @@ class Recorder(object, metaclass = ABCMeta):
         inner join stable on {0}.stable = stable.id)
         inner join series on {0}.series = series.id
         '''.format(table)
+        if assocType:
+            joinedTable = '''
+            ({0}) inner join assoctype on {1}.assoctype = assoctype.id
+            '''.format(joinedTable, table)
+        if multiType:
+            joinedTable = '''
+            ({0}) inner join multitype on {1}.multitype = multitype.id
+            '''.format(joinedTable, table)
         return self._qdManip.select(columns, joinedTable, cond, params)
 
 
@@ -287,8 +300,6 @@ class RecorderAssoc(Recorder):
             (self._assocTypeId, assocTypeStr) = self._assocTypeBox.selectedIdd
             assocTypeLabel['text'] = assocTypeStr
 
-        assocTypeList = self._qdManip.getAssocTypeList()
-
         outerFrame = tk.Frame()
 
         topFrame = tk.Frame(outerFrame)
@@ -322,7 +333,7 @@ class RecorderAssoc(Recorder):
         bottomFrame = tk.LabelFrame(outerFrame, text = '連想タイプ')
         bottomFrame.pack()
         self._assocTypeBox = ListboxIdd(bottomFrame, height = 4)
-        self._assocTypeBox.iddList = assocTypeList
+        self._assocTypeBox.iddList = self._qdManip.getAssocTypeList()
         self._assocTypeBox.onSelect = onAssocTypeBoxSelect
         self._assocTypeBox.pack()
         assocTypeLabel = tk.Label(bottomFrame, bg = 'LightPink')
@@ -402,10 +413,11 @@ class RecorderAssoc(Recorder):
                 'examgenre.examgenre',
                 'difficulty_min', 'difficulty_max',
                 'question1', 'question2', 'question3', 'question4',
-                'answer', 'dummy1', 'dummy2', 'dummy3', 'assoctype',
+                'answer', 'dummy1', 'dummy2', 'dummy3','assoctype.assoctype',
                 'comment', 'stable.stable', 'series.series', 'picture_id'
             ],
-            cond
+            cond,
+            assocType = True
         )
         return header + result
 
@@ -522,13 +534,10 @@ class RecorderPanel(Recorder):
             raise ve.QuestionBlankError
 
         answerList = self._answerFrame.answer
-        answerLen = None
+        if not answerList:
+            raise ve.AnswerBlankError
+        answerLen = len(answerList[0])
         for answer in answerList:
-            if not answer:
-                raise ve.AnswerBlankError
-            if answerLen is None:
-                answerLen = len(answer)
-                continue
             newAnswerLen = len(answer)
             if answerLen != newAnswerLen:
                 raise ve.PanelLengthInconsistError
@@ -558,7 +567,7 @@ class RecorderPanel(Recorder):
         condList = []
         if question:
             condList.append("question like '{}%'".format(questionHead))
-        if answerList[0]:
+        if answerList:
             for answer in answerList:
                 condList.extend([
                     s.format(answer) for s in
@@ -723,12 +732,13 @@ class RecorderTyping(Recorder):
     def search(self):
         question = self._questionFrame.question
         questionHead = question[:4]
-        answerList = self._answerFrame.answer
+        rowAnswerList = self._answerFrame.answer
+        answerList = [str.upper(MojiUtil.toHankaku(ans)) for ans in rowAnswerList]
 
         condList = []
         if question:
             condList.append("question like '{}%'".format(questionHead))
-        if answerList[0]:
+        if answerList:
             for answer in answerList:
                 condList.extend([
                     s.format(answer) for s in
@@ -797,7 +807,8 @@ class RecorderCube(Recorder):
     def search(self):
         question = self._questionFrame.question
         questionHead = question[:4]
-        answer = self._answerEF.getEntryText()
+        rowAnswer = self._answerEF.getEntryText()
+        answer = str.upper(MojiUtil.toHankaku(rowAnswer))
 
         condList = []
         if question:
@@ -872,14 +883,15 @@ class RecorderEffect(Recorder):
         question = self._questionFrame.question
         questionHead = question[:4]
         questionEffect = self._questionEF.getEntryText()
-        answerList = self._answerFrame.answer
+        rowAnswerList = self._answerFrame.answer
+        answerList = [str.upper(MojiUtil.toHankaku(ans)) for ans in rowAnswerList]
 
         condList = []
         if question:
             condList.append("question like '{}%'".format(questionHead))
         if questionEffect:
             condList.append("questionEffect = '{}'".format(questionEffect))
-        if answerList[0]:
+        if answerList:
             for answer in answerList:
                 condList.extend([
                     s.format(answer) for s in
@@ -913,4 +925,218 @@ class RecorderEffect(Recorder):
         self._questionFrame.question = ''
         self._questionEF.deleteEntryText()
         self._answerFrame.answer = ''
+
+
+
+@recorder
+class RecorderOrder(Recorder):
+    @property
+    def quizName(self):
+        return '順番当て'
+
+
+    def recordationFrame(self):
+        def onMultiTypeBoxSelect(evt):
+            (self._multiTypeId, multiTypeStr) = self._multiTypeBox.selectedIdd
+            multiTypeLabel['text'] = multiTypeStr
+
+        outerFrame = tk.Frame()
+
+        self._questionFrame = QuestionFrame(outerFrame)
+        self._questionFrame.pack()
+        self._answerFrame = AnswerTextFrame(outerFrame)
+        self._answerFrame.pack()
+
+        bottomFrame = tk.LabelFrame(outerFrame, text = '問題タイプ')
+        bottomFrame.pack()
+        self._multiTypeBox = ListboxIdd(bottomFrame, height = 3)
+        self._multiTypeBox.iddList = self._qdManip.getMultiTypeList()
+        self._multiTypeBox.onSelect = onMultiTypeBoxSelect
+        self._multiTypeBox.pack()
+        multiTypeLabel = tk.Label(bottomFrame, bg = 'LightPink')
+        multiTypeLabel.pack()
+
+        # initialize
+        self._multiTypeBox.select(MultiType.Unknown)
+
+        return outerFrame
+
+
+    def record(self, comment, stable, pictureId):
+        qdm = QuizDataManager
+        question = self._questionFrame.question
+        if not question:
+            raise ve.QuestionBlankError
+        answerList = self._answerFrame.answer
+        if not answerList:
+            raise ve.AnswerBlankError
+        answerStr = '\n'.join(answerList)
+        self._qdManip.registerOrder(qdm.subGenreId, qdm.examGenreId,
+            qdm.difficulty_min, qdm.difficulty_max, question, answerStr,
+            self._multiTypeId, comment, stable, qdm.seriesId, pictureId)
+
+
+    def search(self):
+        question = self._questionFrame.question
+        questionHead = question[:4]
+        answerList = self._answerFrame.answer
+        condList = []
+        if question:
+            condList.append("question like '{}%'".format(questionHead))
+        if answerList:
+            for answer in answerList:
+                condList.extend([
+                    s.format(answer) for s in
+                    [
+                        "answer like '%\n{0}\n%'", "answer like '{0}\n%'",
+                        "answer like '%\n{0}'", "answer like '{0}'"
+                    ]
+                ])
+        cond = 'where ' + ' or '.join(condList) if condList else ''
+
+        header = [(
+            'ID', 'ジャンル', 'サブジャンル', '検定ジャンル',
+            '☆下限', '☆上限', '問題', '答え', '問題タイプ',
+            'コメント', '安定性', 'シリーズ', '画像ID'
+        )]
+        result = self.selectFromJoinedTable(
+            'quiz_order',
+            [
+                'quiz_order.id', 'genre.genre', 'subgenre.subgenre',
+                'examgenre.examgenre',
+                'difficulty_min', 'difficulty_max',
+                'question', 'answer', 'multitype.multitype',
+                'comment', 'stable.stable', 'series.series', 'picture_id'
+            ],
+            cond,
+            multiType = True
+        )
+        return header + result
+
+
+    def cleanUp(self):
+        self._questionFrame.question = ''
+        self._answerFrame.answer = ''
+        self._multiTypeBox.select(MultiType.Unknown)
+
+
+
+@recorder
+class RecorderConnect(Recorder):
+    @property
+    def quizName(self):
+        return '線結び'
+
+
+    def recordationFrame(self):
+        def onMultiTypeBoxSelect(evt):
+            (self._multiTypeId, multiTypeStr) = self._multiTypeBox.selectedIdd
+            multiTypeLabel['text'] = multiTypeStr
+
+        outerFrame = tk.Frame()
+
+        self._questionFrame = QuestionFrame(outerFrame)
+        self._questionFrame.pack()
+        topFrame = tk.Frame(outerFrame)
+        topFrame.pack()
+        self._optionLeftFrame = AnswerTextFrame(topFrame)
+        self._optionLeftFrame['text'] = '左選択肢'
+        self._optionLeftFrame.answerText['width'] = 40
+        self._optionLeftFrame.pack(side = tk.LEFT)
+        self._optionRightFrame = AnswerTextFrame(topFrame)
+        self._optionRightFrame['text'] = '右選択肢'
+        self._optionRightFrame.answerText['width'] = 40
+        self._optionRightFrame.pack(side = tk.LEFT)
+
+        bottomFrame = tk.LabelFrame(outerFrame, text = '問題タイプ')
+        bottomFrame.pack()
+        self._multiTypeBox = ListboxIdd(bottomFrame, height = 3)
+        self._multiTypeBox.iddList = self._qdManip.getMultiTypeList()
+        self._multiTypeBox.onSelect = onMultiTypeBoxSelect
+        self._multiTypeBox.pack()
+        multiTypeLabel = tk.Label(bottomFrame, bg = 'LightPink')
+        multiTypeLabel.pack()
+
+        # initialize
+        self._multiTypeBox.select(MultiType.Unknown)
+
+        return outerFrame
+
+
+    def record(self, comment, stable, pictureId):
+        qdm = QuizDataManager
+        question = self._questionFrame.question
+        if not question:
+            raise ve.QuestionBlankError
+        optionLeft = self._optionLeftFrame.answer
+        optionRight = self._optionRightFrame.answer
+        if (not optionLeft) or (not optionRight):
+            raise ve.AnswerBlankError
+        optionLeftStr = '\n'.join(optionLeft)
+        optionRightStr = '\n'.join(optionRight)
+        self._qdManip.registerConnect(qdm.subGenreId, qdm.examGenreId,
+            qdm.difficulty_min, qdm.difficulty_max, question,
+            optionLeftStr, optionRightStr,
+            self._multiTypeId, comment, stable, qdm.seriesId, pictureId)
+
+
+    def search(self):
+        question = self._questionFrame.question
+        questionHead = question[:4]
+        optionLeftList = self._optionLeftFrame.answer
+        optionRightList = self._optionRightFrame.answer
+        condList = []
+        if question:
+            condList.append("question like '{}%'".format(questionHead))
+        if optionLeftList:
+            for optL in optionLeftList:
+                condList.extend([
+                    s.format(optL) for s in
+                    [
+                        "option_left like '%\n{0}\n%'",
+                        "option_left like '{0}\n%'",
+                        "option_left like '%\n{0}'",
+                        "option_left like '{0}'"
+                    ]
+                ])
+        if optionRightList:
+            for optR in optionRightList:
+                condList.extend([
+                    s.format(optR) for s in
+                    [
+                        "option_right like '%\n{0}\n%'",
+                        "option_right like '{0}\n%'",
+                        "option_right like '%\n{0}'",
+                        "option_right like '{0}'"
+                    ]
+                ])
+        cond = 'where ' + ' or '.join(condList) if condList else ''
+
+        header = [(
+            'ID', 'ジャンル', 'サブジャンル', '検定ジャンル',
+            '☆下限', '☆上限', '問題', '左選択肢', '右選択肢', '問題タイプ',
+            'コメント', '安定性', 'シリーズ', '画像ID'
+        )]
+        result = self.selectFromJoinedTable(
+            'quiz_connect',
+            [
+                'quiz_connect.id', 'genre.genre', 'subgenre.subgenre',
+                'examgenre.examgenre',
+                'difficulty_min', 'difficulty_max', 'question',
+                'option_left', 'option_right', 'multitype.multitype',
+                'comment', 'stable.stable', 'series.series', 'picture_id'
+            ],
+            cond,
+            multiType = True
+        )
+        return header + result
+
+
+    def cleanUp(self):
+        self._questionFrame.question = ''
+        self._optionLeftFrame.answer = ''
+        self._optionRightFrame.answer = ''
+        self._multiTypeBox.select(MultiType.Unknown)
+
+
 
