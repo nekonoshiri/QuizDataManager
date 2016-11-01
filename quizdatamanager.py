@@ -248,19 +248,24 @@ class QuizDataManager(tk.Frame):
         bottomFrame.pack(anchor = tk.E)
 
 
+    def __getCurrentRecorder(self):
+        ix = self.__mainNbook.index(self.__mainNbook.select())
+        return self.__recorderList[ix]
+
+
     def __createSearchWindow(self):
         def onDestroy(evt):
             self.__searchWindow = None
-        if not self.__searchWindow:
-            self.__searchWindow = SearchWindow(self)
-            self.__searchWindow.bind('<Destroy>', onDestroy)
-        else:
-            self.__searchWindow.focus_force()
+        if self.__searchWindow:
+            self.__searchWindow.destroy()
+        recorder = self.__getCurrentRecorder()
+        searchResult = recorder.search()
+        self.__searchWindow = SearchWindow(self, searchResult)
+        self.__searchWindow.bind('<Destroy>', onDestroy)
 
 
     def __record(self):
-        ix = self.__mainNbook.index(self.__mainNbook.select())
-        recorder = self.__recorderList[ix]
+        recorder = self.__getCurrentRecorder()
         try:
             self.__validationGenreIdAndSeriesId()
             pictureId = self.__pictureId
@@ -296,9 +301,16 @@ class QuizDataManager(tk.Frame):
 
 
 class SearchWindow(tk.Toplevel):
-    
-
-    def __init__(self, master, **option):
-        super().__init__(master, **option)
+    def __init__(self, master, searchResult):
+        super().__init__(master)
         self.title('問題検索')
-    
+        self.__createMain(searchResult)
+
+
+    def __createMain(self, searchResult):
+        for (rowIx, rowItem) in enumerate(searchResult):
+            for (columnIx, columnItem) in enumerate(rowItem):
+                l = tk.Label(self, text = columnItem, relief = tk.RIDGE)
+                l.grid(row = rowIx, column = columnIx,
+                    sticky = tk.W + tk.E + tk.N + tk.S)
+

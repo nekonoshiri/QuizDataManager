@@ -54,6 +54,10 @@ class Recorder(object, metaclass = ABCMeta):
 
 
     @abstractmethod
+    def search(self): pass
+
+
+    @abstractmethod
     def cleanUp(self): pass
 
 
@@ -87,6 +91,17 @@ class Recorder(object, metaclass = ABCMeta):
         answerStr = '\n'.join(answerList)
         return (typingType, answerStr)
 
+
+    #for search
+    def selectFromJoinedTable(self, table, columns, cond = '', params = []):
+        joinedTable = '''(((({0}
+        inner join subgenre on {0}.subgenre = subgenre.id)
+        inner join genre on subgenre.genre = genre.id)
+        inner join examgenre on {0}.examgenre = examgenre.id)
+        inner join stable on {0}.stable = stable.id)
+        inner join series on {0}.series = series.id
+        '''.format(table)
+        return self._qdManip.select(columns, joinedTable, cond, params)
 
 
 @recorder
@@ -139,6 +154,28 @@ class RecorderOX(Recorder):
             comment, stable, qdm.seriesId, pictureId)
 
 
+    def search(self):
+        question = self._questionFrame.question
+        questionHead = question[:4]
+        header = [(
+            'ID', 'ジャンル', 'サブジャンル', '検定ジャンル',
+            '☆下限', '☆上限',
+            '問題', '答え', 'コメント', '安定性', 'シリーズ', '画像ID'
+        )]
+        result = self.selectFromJoinedTable(
+            'quiz_ox',
+            [
+                'quiz_ox.id', 'genre.genre', 'subgenre.subgenre',
+                'examgenre.examgenre',
+                'difficulty_min', 'difficulty_max', 'question',
+                "replace(replace(answer, 1, 'True'), 0, 'False')",
+                'comment', 'stable.stable', 'series.series', 'picture_id'
+            ],
+            "where question like '{}%'".format(questionHead)
+        )
+        return header + result
+
+
     def cleanUp(self):
         self._questionFrame.question = ''
         self._answer = True
@@ -184,6 +221,49 @@ class RecorderFour(Recorder):
         self._qdManip.registerFour(qdm.subGenreId, qdm.examGenreId,
             qdm.difficulty_min, qdm.difficulty_max, question, answer,
             dummy1, dummy2, dummy3, comment, stable, qdm.seriesId, pictureId)
+
+
+    def search(self):
+        question = self._questionFrame.question
+        questionHead = question[:4]
+        answer = self._answerEF.getEntryText()
+        dummy1 = self._dummy1EF.getEntryText()
+        dummy2 = self._dummy2EF.getEntryText()
+        dummy3 = self._dummy3EF.getEntryText()
+
+        condList = []
+        if question:
+            condList.append("question like '{}%'".format(questionHead))
+        if any((answer, dummy1, dummy2, dummy3)):
+            l = [
+                "answer = '{}'", "dummy1 = '{}'",
+                "dummy2 = '{}'", "dummy3 = '{}'"
+            ]
+            for s in l:
+                condList.extend([
+                    s.format(answer), s.format(dummy1),
+                    s.format(dummy2), s.format(dummy3)
+                ])
+        cond = 'where ' + ' or '.join(condList) if condList else ''
+
+        header = [(
+            'ID', 'ジャンル', 'サブジャンル', '検定ジャンル',
+            '☆下限', '☆上限', '問題',
+            '答え', 'ダミー１', 'ダミー２', 'ダミー３',
+            'コメント', '安定性', 'シリーズ', '画像ID'
+        )]
+        result = self.selectFromJoinedTable(
+            'quiz_four',
+            [
+                'quiz_four.id', 'genre.genre', 'subgenre.subgenre',
+                'examgenre.examgenre',
+                'difficulty_min', 'difficulty_max', 'question',
+                'answer', 'dummy1', 'dummy2', 'dummy3',
+                'comment', 'stable.stable', 'series.series', 'picture_id'
+            ],
+            cond
+        )
+        return header + result
 
 
     def cleanUp(self):
@@ -276,6 +356,60 @@ class RecorderAssoc(Recorder):
             comment, stable, qdm.seriesId, pictureId)
 
 
+    def search(self):
+        question1 = self._question1EF.getEntryText()
+        question2 = self._question2EF.getEntryText()
+        question3 = self._question3EF.getEntryText()
+        question4 = self._question4EF.getEntryText()
+        answer = self._answerEF.getEntryText()
+        dummy1 = self._dummy1EF.getEntryText()
+        dummy2 = self._dummy2EF.getEntryText()
+        dummy3 = self._dummy3EF.getEntryText()
+        if any((question1, question2, question3, question4,
+                answer, dummy1, dummy2, dummy3)):
+            cond = """where
+            question1 = '{0}' or question1 = '{1}'
+            or question1 = '{2}' or question1 = '{3}'
+            or question2 = '{0}' or question2 = '{1}'
+            or question2 = '{2}' or question2 = '{3}'
+            or question3 = '{0}' or question3 = '{1}'
+            or question3 = '{2}' or question3 = '{3}'
+            or question4 = '{0}' or question4 = '{1}'
+            or question4 = '{2}' or question4 = '{3}'
+            or answer = '{4}' or answer = '{5}'
+            or answer = '{6}' or answer = '{7}'
+            or dummy1 = '{4}' or dummy1 = '{5}'
+            or dummy1 = '{6}' or dummy1 = '{7}'
+            or dummy2 = '{4}' or dummy2 = '{5}'
+            or dummy2 = '{6}' or dummy2 = '{7}'
+            or dummy3 = '{4}' or dummy3 = '{5}'
+            or dummy3 = '{6}' or dummy3 = '{7}'
+            """.format(question1, question2, question3, question4,
+                answer, dummy1, dummy2, dummy3)
+        else:
+            cond = ''
+        header = [(
+            'ID', 'ジャンル', 'サブジャンル', '検定ジャンル',
+            '☆下限', '☆上限',
+            '問題１', '問題２', '問題３', '問題４',
+            '答え', 'ダミー１', 'ダミー２', 'ダミー３', '連想タイプ',
+            'コメント', '安定性', 'シリーズ', '画像ID'
+        )]
+        result = self.selectFromJoinedTable(
+            'quiz_assoc',
+            [
+                'quiz_assoc.id', 'genre.genre', 'subgenre.subgenre',
+                'examgenre.examgenre',
+                'difficulty_min', 'difficulty_max',
+                'question1', 'question2', 'question3', 'question4',
+                'answer', 'dummy1', 'dummy2', 'dummy3', 'assoctype',
+                'comment', 'stable.stable', 'series.series', 'picture_id'
+            ],
+            cond
+        )
+        return header + result
+
+
     def cleanUp(self):
         self._question1EF.deleteEntryText()
         self._question2EF.deleteEntryText()
@@ -319,6 +453,37 @@ class RecorderSort(Recorder):
         self._qdManip.registerSort(qdm.subGenreId, qdm.examGenreId,
             qdm.difficulty_min, qdm.difficulty_max, question, answer,
             comment, stable, qdm.seriesId, pictureId)
+
+
+    def search(self):
+        question = self._questionFrame.question
+        questionHead = question[:4]
+        answer = self._answerEF.getEntryText()
+
+        condList = []
+        if question:
+            condList.append("question like '{}%'".format(questionHead))
+        if answer:
+            condList.append("answer = '{}'".format(answer))
+        cond = 'where ' + ' or '.join(condList) if condList else ''
+
+        header = [(
+            'ID', 'ジャンル', 'サブジャンル', '検定ジャンル',
+            '☆下限', '☆上限', '問題', '答え',
+            'コメント', '安定性', 'シリーズ', '画像ID'
+        )]
+        result = self.selectFromJoinedTable(
+            'quiz_sort',
+            [
+                'quiz_sort.id', 'genre.genre', 'subgenre.subgenre',
+                'examgenre.examgenre',
+                'difficulty_min', 'difficulty_max',
+                'question', 'answer',
+                'comment', 'stable.stable', 'series.series', 'picture_id'
+            ],
+            cond
+        )
+        return header + result
 
 
     def cleanUp(self):
@@ -385,6 +550,44 @@ class RecorderPanel(Recorder):
             comment, stable, qdm.seriesId, pictureId)
 
 
+    def search(self):
+        question = self._questionFrame.question
+        questionHead = question[:4]
+        answerList = self._answerFrame.answer
+
+        condList = []
+        if question:
+            condList.append("question like '{}%'".format(questionHead))
+        if answerList[0]:
+            for answer in answerList:
+                condList.extend([
+                    s.format(answer) for s in
+                    [
+                        "answer like '%\n{0}\n%'", "answer like '{0}\n%'",
+                        "answer like '%\n{0}'", "answer like '{0}'"
+                    ]
+                ])
+        cond = 'where ' + ' or '.join(condList) if condList else ''
+
+        header = [(
+            'ID', 'ジャンル', 'サブジャンル', '検定ジャンル',
+            '☆下限', '☆上限', '問題', '答え', 'パネル',
+            'コメント', '安定性', 'シリーズ', '画像ID'
+        )]
+        result = self.selectFromJoinedTable(
+            'quiz_panel',
+            [
+                'quiz_panel.id', 'genre.genre', 'subgenre.subgenre',
+                'examgenre.examgenre',
+                'difficulty_min', 'difficulty_max',
+                'question', 'answer', 'panel',
+                'comment', 'stable.stable', 'series.series', 'picture_id'
+            ],
+            cond
+        )
+        return header + result
+
+
     def cleanUp(self):
         self._questionFrame.question = ''
         self._answerFrame.answer = ''
@@ -435,6 +638,49 @@ class RecorderSlot(Recorder):
             dummy1, dummy2, dummy3, comment, stable, qdm.seriesId, pictureId)
 
 
+    def search(self):
+        question = self._questionFrame.question
+        questionHead = question[:4]
+        answer = self._answerEF.getEntryText()
+        dummy1 = self._dummy1EF.getEntryText()
+        dummy2 = self._dummy2EF.getEntryText()
+        dummy3 = self._dummy3EF.getEntryText()
+
+        condList = []
+        if question:
+            condList.append("question like '{}%'".format(questionHead))
+        if any((answer, dummy1, dummy2, dummy3)):
+            l = [
+                "answer = '{}'", "dummy1 = '{}'",
+                "dummy2 = '{}'", "dummy3 = '{}'"
+            ]
+            for s in l:
+                condList.extend([
+                    s.format(answer), s.format(dummy1),
+                    s.format(dummy2), s.format(dummy3)
+                ])
+        cond = 'where ' + ' or '.join(condList) if condList else ''
+
+        header = [(
+            'ID', 'ジャンル', 'サブジャンル', '検定ジャンル',
+            '☆下限', '☆上限', '問題',
+            '答え', 'ダミー１', 'ダミー２', 'ダミー３',
+            'コメント', '安定性', 'シリーズ', '画像ID'
+        )]
+        result = self.selectFromJoinedTable(
+            'quiz_slot',
+            [
+                'quiz_slot.id', 'genre.genre', 'subgenre.subgenre',
+                'examgenre.examgenre',
+                'difficulty_min', 'difficulty_max', 'question',
+                'answer', 'dummy1', 'dummy2', 'dummy3',
+                'comment', 'stable.stable', 'series.series', 'picture_id'
+            ],
+            cond
+        )
+        return header + result
+
+
     def cleanUp(self):
         self._questionFrame.question = ''
         self._answerEF.deleteEntryText()
@@ -474,6 +720,44 @@ class RecorderTyping(Recorder):
             answer, comment, stable, qdm.seriesId, pictureId)
 
 
+    def search(self):
+        question = self._questionFrame.question
+        questionHead = question[:4]
+        answerList = self._answerFrame.answer
+
+        condList = []
+        if question:
+            condList.append("question like '{}%'".format(questionHead))
+        if answerList[0]:
+            for answer in answerList:
+                condList.extend([
+                    s.format(answer) for s in
+                    [
+                        "answer like '%\n{0}\n%'", "answer like '{0}\n%'",
+                        "answer like '%\n{0}'", "answer like '{0}'"
+                    ]
+                ])
+        cond = 'where ' + ' or '.join(condList) if condList else ''
+
+        header = [(
+            'ID', 'ジャンル', 'サブジャンル', '検定ジャンル',
+            '☆下限', '☆上限', '問題', '答え',
+            'コメント', '安定性', 'シリーズ', '画像ID'
+        )]
+        result = self.selectFromJoinedTable(
+            'quiz_typing',
+            [
+                'quiz_typing.id', 'genre.genre', 'subgenre.subgenre',
+                'examgenre.examgenre',
+                'difficulty_min', 'difficulty_max',
+                'question', 'answer',
+                'comment', 'stable.stable', 'series.series', 'picture_id'
+            ],
+            cond
+        )
+        return header + result
+
+
     def cleanUp(self):
         self._questionFrame.question = ''
         self._answerFrame.answer = ''
@@ -508,6 +792,37 @@ class RecorderCube(Recorder):
         self._qdManip.registerCube(qdm.subGenreId, qdm.examGenreId,
             qdm.difficulty_min, qdm.difficulty_max, question, typingtype,
             answer, comment, stable, qdm.seriesId, pictureId)
+
+
+    def search(self):
+        question = self._questionFrame.question
+        questionHead = question[:4]
+        answer = self._answerEF.getEntryText()
+
+        condList = []
+        if question:
+            condList.append("question like '{}%'".format(questionHead))
+        if answer:
+            condList.append("answer = '{}'".format(answer))
+        cond = 'where ' + ' or '.join(condList) if condList else ''
+
+        header = [(
+            'ID', 'ジャンル', 'サブジャンル', '検定ジャンル',
+            '☆下限', '☆上限', '問題', '答え',
+            'コメント', '安定性', 'シリーズ', '画像ID'
+        )]
+        result = self.selectFromJoinedTable(
+            'quiz_cube',
+            [
+                'quiz_cube.id', 'genre.genre', 'subgenre.subgenre',
+                'examgenre.examgenre',
+                'difficulty_min', 'difficulty_max',
+                'question', 'answer',
+                'comment', 'stable.stable', 'series.series', 'picture_id'
+            ],
+            cond
+        )
+        return header + result
 
 
     def cleanUp(self):
@@ -551,6 +866,47 @@ class RecorderEffect(Recorder):
         self._qdManip.registerEffect(qdm.subGenreId, qdm.examGenreId,
             qdm.difficulty_min, qdm.difficulty_max, question, questionEffect,
             typingtype, answer, comment, stable, qdm.seriesId, pictureId)
+
+
+    def search(self):
+        question = self._questionFrame.question
+        questionHead = question[:4]
+        questionEffect = self._questionEF.getEntryText()
+        answerList = self._answerFrame.answer
+
+        condList = []
+        if question:
+            condList.append("question like '{}%'".format(questionHead))
+        if questionEffect:
+            condList.append("questionEffect = '{}'".format(questionEffect))
+        if answerList[0]:
+            for answer in answerList:
+                condList.extend([
+                    s.format(answer) for s in
+                    [
+                        "answer like '%\n{0}\n%'", "answer like '{0}\n%'",
+                        "answer like '%\n{0}'", "answer like '{0}'"
+                    ]
+                ])
+        cond = 'where ' + ' or '.join(condList) if condList else ''
+
+        header = [(
+            'ID', 'ジャンル', 'サブジャンル', '検定ジャンル',
+            '☆下限', '☆上限', '問題', '文字', '答え',
+            'コメント', '安定性', 'シリーズ', '画像ID'
+        )]
+        result = self.selectFromJoinedTable(
+            'quiz_effect',
+            [
+                'quiz_effect.id', 'genre.genre', 'subgenre.subgenre',
+                'examgenre.examgenre',
+                'difficulty_min', 'difficulty_max',
+                'question', 'questionEffect', 'answer',
+                'comment', 'stable.stable', 'series.series', 'picture_id'
+            ],
+            cond
+        )
+        return header + result
 
 
     def cleanUp(self):

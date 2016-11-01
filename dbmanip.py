@@ -2,6 +2,8 @@ from copy import deepcopy
 from functools import reduce
 import sqlite3
 
+from util import find
+
 
 class DBManip(object):
     def __init__(self, filePath):
@@ -87,8 +89,20 @@ class QuestionDataDBManip(DBManip):
         return deepcopy(self.__assocTypeList)
 
 
+    def getGenreIdBySubGenreId(self, subGenreId, throw = False):
+        return find(lambda x: x[1] == subGenreId, self.__subGenreList, throw)
+
+
     def getGenreNameById(self, genreId):
         return [g for (i, g) in self.__genreList if i == genreId][0]
+
+
+    def getGenreNameBySubGenreId(self, subGenreId):
+        try:
+            genreId = getGenreIdBySubGenreId(subGenreId, throw = True)
+            return getGenreNameById(genreId)
+        except ValueError:
+            return ''
 
 
     def getSubGenreNameById(self, subGenreId):
