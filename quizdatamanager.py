@@ -20,7 +20,7 @@ class QuizDataManager(tk.Frame):
 
 
 # Instance Variables
-# __qdManip, __master, __stableVar :: __init__
+# __qdManip, __master, __stableVar, __searchWindow :: __init__
 # __recorderList :: __makeRecorderList
 # __mainNbook :: __createMainNotebook
 # __pictureIdEF, __commentText :: __createSupplementalFrame
@@ -83,6 +83,7 @@ class QuizDataManager(tk.Frame):
         self.__windowTitle = '新規登録'
         self.__stableVar = tk.BooleanVar()
         self.__stable = False
+        self.__searchWindow = None
         self.__makeRecorderList()
         self.__createWidgets()
         self.pack()
@@ -236,10 +237,25 @@ class QuizDataManager(tk.Frame):
 
     def __createBottomButton(self):
         bottomFrame = tk.Frame(self)
-        registerButton = tk.Button(bottomFrame, text = '登録')
+        searchButton = tk.Button(bottomFrame, text = '問題検索')
+        searchButton['command'] = self.__createSearchWindow
+        searchButton.pack(side = tk.LEFT)
+        paddingFrame = tk.Frame(bottomFrame, width = 10)
+        paddingFrame.pack(side = tk.LEFT)
+        registerButton = tk.Button(bottomFrame, text = '登録', fg = 'red')
         registerButton['command'] = self.__record
         registerButton.pack(side = tk.LEFT)
         bottomFrame.pack(anchor = tk.E)
+
+
+    def __createSearchWindow(self):
+        def onDestroy(evt):
+            self.__searchWindow = None
+        if not self.__searchWindow:
+            self.__searchWindow = SearchWindow(self)
+            self.__searchWindow.bind('<Destroy>', onDestroy)
+        else:
+            self.__searchWindow.focus_force()
 
 
     def __record(self):
@@ -277,3 +293,12 @@ class QuizDataManager(tk.Frame):
         for recorder in self.__recorderList:
             recorder.cleanUp()
 
+
+
+class SearchWindow(tk.Toplevel):
+    
+
+    def __init__(self, master, **option):
+        super().__init__(master, **option)
+        self.title('問題検索')
+    
