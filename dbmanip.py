@@ -104,8 +104,8 @@ class QuestionDataDBManip(DBManip):
 
     def getGenreNameBySubGenreId(self, subGenreId):
         try:
-            genreId = getGenreIdBySubGenreId(subGenreId, throw = True)
-            return getGenreNameById(genreId)
+            genreId = self.getGenreIdBySubGenreId(subGenreId, throw = True)
+            return self.getGenreNameById(genreId)
         except ValueError:
             return ''
 
