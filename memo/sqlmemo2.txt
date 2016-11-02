@@ -109,6 +109,8 @@ difficulty_min integer not null check((1 <= difficulty_min) and (difficulty_min 
 difficulty_max integer not null check((difficulty_min <= difficulty_max) and (difficulty_max <= 5)) default 5,
 question text not null unique,
 answer text not null,
+dummy text not null,
+multitype integer not null,
 comment text not null default '',
 stable integer not null check(stable in (0, 1)) default 0,
 appear_count integer not null check(0 <= appear_count) default 1,
@@ -118,7 +120,8 @@ series integer not null,
 picture_id integer,
 foreign key(subgenre) references subgenre(id),
 foreign key(examgenre) references examgenre(id),
-foreign key(series) references series(id)
+foreign key(series) references series(id),
+foreign key(multitype) references multitype(id)
 );
 
 [ImageTouch]

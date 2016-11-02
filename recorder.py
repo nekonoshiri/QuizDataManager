@@ -1209,22 +1209,24 @@ class RecorderMulti(Recorder):
             condList.append("question like '{}%'".format(questionHead))
         if answerList:
             for answer in answerList:
-                condList.extend([
-                    s.format(answer) for s in
-                    [
-                        "answer like '%\n{0}\n%'", "answer like '{0}\n%'",
-                        "answer like '%\n{0}'", "answer like '{0}'"
-                    ]
-                ])
+                for column in ('answer', 'dummy'):
+                    condList.extend([
+                        s.format(column, answer) for s in
+                        [
+                            "{0} like '%\n{1}\n%'", "{0} like '{1}\n%'",
+                            "{0} like '%\n{1}'", "{0} like '{1}'"
+                        ]
+                    ])
         if dummyList:
             for dummy in dummyList:
-                condList.extend([
-                    s.format(dummy) for s in
-                    [
-                        "dummy like '%\n{0}\n%'", "dummy like '{0}\n%'",
-                        "dummy like '%\n{0}'", "dummy like '{0}'"
-                    ]
-                ])
+                for column in ('answer', 'dummy'):
+                    condList.extend([
+                        s.format(column, dummy) for s in
+                        [
+                            "{0} like '%\n{1}\n%'", "{0} like '{1}\n%'",
+                            "{0} like '%\n{1}'", "{0} like '{1}'"
+                        ]
+                    ])
         cond = 'where ' + ' or '.join(condList) if condList else ''
 
         header = [(
@@ -1372,5 +1374,205 @@ class RecorderGroup(Recorder):
         self._group2Frame.answer = ''
         self._group3Frame.answer = ''
         self._multiTypeBox.select(MultiType.Unknown)
+
+
+
+@recorder
+class RecorderFirstcome(Recorder):
+    @property
+    def quizName(self):
+        return '早勝ち'
+
+
+    def recordationFrame(self):
+        def onMultiTypeBoxSelect(evt):
+            (self._multiTypeId, multiTypeStr) = self._multiTypeBox.selectedIdd
+            multiTypeLabel['text'] = multiTypeStr
+
+        outerFrame = tk.Frame()
+
+        self._questionFrame = QuestionFrame(outerFrame)
+        self._questionFrame.pack()
+        topFrame = tk.Frame(outerFrame)
+        topFrame.pack()
+        self._answerFrame = AnswerTextFrame(topFrame)
+        self._answerFrame['text'] = '答え'
+        self._answerFrame.answerText['width'] = 40
+        self._answerFrame.pack(side = tk.LEFT)
+        self._dummyFrame = AnswerTextFrame(topFrame)
+        self._dummyFrame['text'] = 'ダミー'
+        self._dummyFrame.answerText['width'] = 40
+        self._dummyFrame.pack(side = tk.LEFT)
+
+        bottomFrame = tk.LabelFrame(outerFrame, text = '問題タイプ')
+        bottomFrame.pack()
+        self._multiTypeBox = ListboxIdd(bottomFrame, height = 3)
+        self._multiTypeBox.iddList = self._qdManip.getMultiTypeList()
+        self._multiTypeBox.onSelect = onMultiTypeBoxSelect
+        self._multiTypeBox.pack()
+        multiTypeLabel = tk.Label(bottomFrame, bg = 'LightPink')
+        multiTypeLabel.pack()
+
+        # initialize
+        self._multiTypeBox.select(MultiType.Unknown)
+
+        return outerFrame
+
+
+    def record(self, comment, stable, pictureId):
+        qdm = QuizDataManager
+        question = self._questionFrame.question
+        if not question:
+            raise ve.QuestionBlankError
+        answerList = self._answerFrame.answer
+        dummyList = self._dummyFrame.answer
+        if (not answerList) or (not dummyList):
+            raise ve.AnswerBlankError
+        answerStr = '\n'.join(answerList)
+        dummyStr = '\n'.join(dummyList)
+        self._qdManip.registerFirstcome(qdm.subGenreId, qdm.examGenreId,
+            qdm.difficulty_min, qdm.difficulty_max, question,
+            answerStr, dummyStr,
+            self._multiTypeId, comment, stable, qdm.seriesId, pictureId)
+
+
+    def search(self):
+        question = self._questionFrame.question
+        questionHead = question[:4]
+        answerList = self._answerFrame.answer
+        dummyList = self._dummyFrame.answer
+        condList = []
+        if question:
+            condList.append("question like '{}%'".format(questionHead))
+        if answerList:
+            for answer in answerList:
+                for column in ('answer', 'dummy'):
+                    condList.extend([
+                        s.format(column, answer) for s in
+                        [
+                            "{0} like '%\n{1}\n%'", "{0} like '{1}\n%'",
+                            "{0} like '%\n{1}'", "{0} like '{1}'"
+                        ]
+                    ])
+        if dummyList:
+            for dummy in dummyList:
+                for column in ('answer', 'dummy'):
+                    condList.extend([
+                        s.format(column, dummy) for s in
+                        [
+                            "{0} like '%\n{1}\n%'", "{0} like '{1}\n%'",
+                            "{0} like '%\n{1}'", "{0} like '{1}'"
+                        ]
+                    ])
+        cond = 'where ' + ' or '.join(condList) if condList else ''
+
+        header = [(
+            'ID', 'ジャンル', 'サブジャンル', '検定ジャンル',
+            '☆下限', '☆上限', '問題', '答え', 'ダミー', '問題タイプ',
+            'コメント', '安定性', 'シリーズ', '画像ID'
+        )]
+        result = self.selectFromJoinedTable(
+            'quiz_firstcome',
+            [
+                'quiz_firstcome.id', 'genre.genre', 'subgenre.subgenre',
+                'examgenre.examgenre',
+                'difficulty_min', 'difficulty_max', 'question',
+                'answer', 'dummy', 'multitype.multitype',
+                'comment', 'stable.stable', 'series.series', 'picture_id'
+            ],
+            cond,
+            multiType = True
+        )
+        return header + result
+
+
+    def cleanUp(self):
+        self._questionFrame.question = ''
+        self._answerFrame.answer = ''
+        self._dummyFrame.answer = ''
+        self._multiTypeBox.select(MultiType.Unknown)
+
+
+
+@recorder
+class RecorderImagetouch(Recorder):
+    @property
+    def quizName(self):
+        return '画タッチ'
+
+
+    @property
+    def _pictureAnswerId(self):
+        pictureAnswerIdStr = self._pictureAnswerIdEF.getEntryText()
+        if not pictureAnswerIdStr:
+            raise ve.AnswerBlankError
+        try:
+            return int(pictureAnswerIdStr)
+        except ValueError:
+            raise ve.InvalidPictureIdError
+
+
+    @_pictureAnswerId.setter
+    def _pictureAnswerId(self, pictureAnswerId):
+        if pictureAnswerId is None:
+            self._pictureAnswerIdEF.deleteEntryText()
+        else:
+            self._pictureAnswerIdEF.setEntryText(str(pictureAnswerId))
+
+
+    def recordationFrame(self):
+        outerFrame = tk.Frame()
+
+        self._questionFrame = QuestionFrame(outerFrame)
+        self._questionFrame.pack()
+
+        self._pictureAnswerIdEF = EntryFrame(outerFrame, text = '答え画像ID')
+        self._pictureAnswerIdEF.pack()
+
+        return outerFrame
+
+
+    def record(self, comment, stable, pictureId):
+        qdm = QuizDataManager
+        question = self._questionFrame.question
+        if not question:
+            raise ve.QuestionBlankError
+        pictureAnswerId = self._pictureAnswerId
+        self._qdManip.registerImagetouch(qdm.subGenreId, qdm.examGenreId,
+            qdm.difficulty_min, qdm.difficulty_max, question,
+            comment, stable, qdm.seriesId, pictureId, pictureAnswerId)
+
+
+    def search(self):
+        question = self._questionFrame.question
+        questionHead = question[:4]
+
+        condList = []
+        if question:
+            condList.append("question like '{}%'".format(questionHead))
+        cond = 'where ' + ' or '.join(condList) if condList else ''
+
+        header = [(
+            'ID', 'ジャンル', 'サブジャンル', '検定ジャンル',
+            '☆下限', '☆上限', '問題',
+            'コメント', '安定性', 'シリーズ', '画像ID', '答え画像ID'
+        )]
+        result = self.selectFromJoinedTable(
+            'quiz_imagetouch',
+            [
+                'quiz_imagetouch.id', 'genre.genre', 'subgenre.subgenre',
+                'examgenre.examgenre',
+                'difficulty_min', 'difficulty_max',
+                'question', 'comment', 'stable.stable', 'series.series',
+                'picture_id', 'picture_answer_id'
+            ],
+            cond
+        )
+        return header + result
+
+
+    def cleanUp(self):
+        self._questionFrame.question = ''
+
 
 

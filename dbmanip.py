@@ -315,14 +315,16 @@ class QuestionDataDBManip(DBManip):
 
     def registerFirstcome(self, subGenreId: int, examGenreId: int,
             difficulty_min: int, difficulty_max: int, question: str,
-            answer: str, comment: str, stable: bool, seriesId: int,
-            pictureId: int):
+            answer: str, dummy: str, multitypeId: int,
+            comment: str, stable: bool, seriesId: int, pictureId: int):
         self.insert(
             'quiz_firstcome',
             ['subgenre', 'examgenre', 'difficulty_min', 'difficulty_max',
-             'question', 'answer', 'comment', 'stable', 'series', 'picture_id'],
+             'question', 'answer', 'dummy', 'multitype',
+             'comment', 'stable', 'series', 'picture_id'],
             [subGenreId, examGenreId, difficulty_min, difficulty_max,
-             question, answer, comment, stable, seriesId, pictureId]
+             question, answer, dummy, multitypeId,
+             comment, stable, seriesId, pictureId]
         )
 
 
