@@ -439,7 +439,7 @@ class RecorderAssoc(Recorder):
 class RecorderSort(Recorder):
     @property
     def quizName(self):
-        return '並べ替え'
+        return '並替'
 
 
     def recordationFrame(self):
@@ -508,7 +508,7 @@ class RecorderSort(Recorder):
 class RecorderPanel(Recorder):
     @property
     def quizName(self):
-        return '文字パネル'
+        return '文字パネ'
 
 
     def recordationFrame(self):
@@ -703,7 +703,7 @@ class RecorderSlot(Recorder):
 class RecorderTyping(Recorder):
     @property
     def quizName(self):
-        return 'タイピング'
+        return 'タイピ'
 
 
     def recordationFrame(self):
@@ -846,7 +846,7 @@ class RecorderCube(Recorder):
 class RecorderEffect(Recorder):
     @property
     def quizName(self):
-        return 'エフェクト'
+        return 'エフェ'
 
 
     def recordationFrame(self):
@@ -932,7 +932,7 @@ class RecorderEffect(Recorder):
 class RecorderOrder(Recorder):
     @property
     def quizName(self):
-        return '順番当て'
+        return '順当'
 
 
     def recordationFrame(self):
@@ -1025,7 +1025,7 @@ class RecorderOrder(Recorder):
 class RecorderConnect(Recorder):
     @property
     def quizName(self):
-        return '線結び'
+        return '線結'
 
 
     def recordationFrame(self):
@@ -1144,7 +1144,7 @@ class RecorderConnect(Recorder):
 class RecorderMulti(Recorder):
     @property
     def quizName(self):
-        return '一問多答'
+        return '多答'
 
 
     def recordationFrame(self):
@@ -1253,5 +1253,124 @@ class RecorderMulti(Recorder):
         self._dummyFrame.answer = ''
         self._multiTypeBox.select(MultiType.Unknown)
 
+
+
+@recorder
+class RecorderGroup(Recorder):
+    @property
+    def quizName(self):
+        return 'グル分け'
+
+
+    def recordationFrame(self):
+        def onMultiTypeBoxSelect(evt):
+            (self._multiTypeId, multiTypeStr) = self._multiTypeBox.selectedIdd
+            multiTypeLabel['text'] = multiTypeStr
+
+        outerFrame = tk.Frame()
+
+        self._questionFrame = QuestionFrame(outerFrame)
+        self._questionFrame.pack()
+        topFrame = tk.LabelFrame(outerFrame,
+            text = '各グループの一行目はグループ名（ヘッダ）')
+        topFrame.pack()
+        self._group1Frame = AnswerTextFrame(topFrame)
+        self._group1Frame['text'] = 'グループ１'
+        self._group1Frame.answerText['width'] = 30
+        self._group1Frame.pack(side = tk.LEFT)
+        self._group2Frame = AnswerTextFrame(topFrame)
+        self._group2Frame['text'] = 'グループ２'
+        self._group2Frame.answerText['width'] = 30
+        self._group2Frame.pack(side = tk.LEFT)
+        self._group3Frame = AnswerTextFrame(topFrame)
+        self._group3Frame['text'] = 'グループ３'
+        self._group3Frame.answerText['width'] = 30
+        self._group3Frame.pack(side = tk.LEFT)
+
+        bottomFrame = tk.LabelFrame(outerFrame, text = '問題タイプ')
+        bottomFrame.pack()
+        self._multiTypeBox = ListboxIdd(bottomFrame, height = 3)
+        self._multiTypeBox.iddList = self._qdManip.getMultiTypeList()
+        self._multiTypeBox.onSelect = onMultiTypeBoxSelect
+        self._multiTypeBox.pack()
+        multiTypeLabel = tk.Label(bottomFrame, bg = 'LightPink')
+        multiTypeLabel.pack()
+
+        # initialize
+        self._multiTypeBox.select(MultiType.Unknown)
+
+        return outerFrame
+
+
+    def record(self, comment, stable, pictureId):
+        qdm = QuizDataManager
+        question = self._questionFrame.question
+        if not question:
+            raise ve.QuestionBlankError
+        group1List = self._group1Frame.answer
+        group2List = self._group2Frame.answer
+        group3List = self._group3Frame.answer
+        if (not group1List) or (not group2List) or (not group3List):
+            raise ve.AnswerBlankError
+        group1Str = '\n'.join(group1List)
+        group2Str = '\n'.join(group2List)
+        group3Str = '\n'.join(group3List)
+        self._qdManip.registerGroup(qdm.subGenreId, qdm.examGenreId,
+            qdm.difficulty_min, qdm.difficulty_max, question,
+            group1Str, group2Str, group3Str,
+            self._multiTypeId, comment, stable, qdm.seriesId, pictureId)
+
+
+    def search(self):
+        question = self._questionFrame.question
+        questionHead = question[:4]
+        group1List = self._group1Frame.answer
+        group2List = self._group2Frame.answer
+        group3List = self._group3Frame.answer
+        condList = []
+        if question:
+            condList.append("question like '{}%'".format(questionHead))
+        for groupList in (group1List, group2List, group3List):
+            if not groupList:
+                continue
+            for groupItem in groupList:
+                for column in ('group1', 'group2', 'group3'):
+                    condList.extend([
+                        s.format(column, groupItem) for s in
+                        [
+                            "{0} like '%\n{1}\n%'", "{0} like '{1}\n%'",
+                            "{0} like '%\n{1}'", "{0} like '{1}'"
+                        ]
+                    ])
+
+        cond = 'where ' + ' or '.join(condList) if condList else ''
+
+        header = [(
+            'ID', 'ジャンル', 'サブジャンル', '検定ジャンル',
+            '☆下限', '☆上限', '問題',
+            'グループ１', 'グループ２', 'グループ３', '問題タイプ',
+            'コメント', '安定性', 'シリーズ', '画像ID'
+        )]
+        result = self.selectFromJoinedTable(
+            'quiz_group',
+            [
+                'quiz_group.id', 'genre.genre', 'subgenre.subgenre',
+                'examgenre.examgenre',
+                'difficulty_min', 'difficulty_max', 'question',
+                'group1', 'group2', 'group3', 'multitype.multitype',
+                'comment', 'stable.stable', 'series.series', 'picture_id'
+            ],
+            cond,
+            multiType = True
+        )
+        return header + result
+
+
+    def cleanUp(self):
+        self._questionFrame.question = ''
+        self._group1Frame.answer = ''
+        self._group2Frame.answer = ''
+        self._group3Frame.answer = ''
+        self._multiTypeBox.select(MultiType.Unknown)
 
 
