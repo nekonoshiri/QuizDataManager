@@ -5,7 +5,7 @@ Quiz data manager with python
 # 必要なもの
 
 - python3 と 標準ライブラリ
-- sqlite3
+- (sqlite3)
 
 
 # 最初になにをする
