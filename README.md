@@ -2,6 +2,10 @@
 
 Quiz data manager with python
 
+# これはなに
+
+クイズのゲームのデータを集めるのにつかえる
+
 # 必要なもの
 
 - python3 と 標準ライブラリ
