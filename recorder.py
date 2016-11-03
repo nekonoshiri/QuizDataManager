@@ -1618,7 +1618,7 @@ class RecorderMulti(Recorder):
             raise ve.QuestionBlankError
         answerList = self._answerFrame.answer
         dummyList = self._dummyFrame.answer
-        if (not answerList) or (not dummyList):
+        if (not answerList) and (not dummyList):
             raise ve.AnswerBlankError
         answerStr = '\n'.join(answerList)
         dummyStr = '\n'.join(dummyList)
@@ -1776,7 +1776,7 @@ class RecorderGroup(Recorder):
         group1List = self._group1Frame.answer
         group2List = self._group2Frame.answer
         group3List = self._group3Frame.answer
-        if (not group1List) or (not group2List) or (not group3List):
+        if (group1List, group2List, group3List).count([]) >= 2:
             raise ve.AnswerBlankError
         group1Str = '\n'.join(group1List)
         group2Str = '\n'.join(group2List)

@@ -297,7 +297,7 @@ class QuizDataManager(tk.Frame):
 
         commentFrame = tk.LabelFrame(outerFrame, text = 'コメント')
         commentFrame.pack()
-        self.__commentText = ScrolledText(commentFrame, height = 3)
+        self.__commentText = ScrolledText(commentFrame, height = 5)
         self.__commentText.pack()
 
         difficultyFrame = tk.LabelFrame(outerFrame,
