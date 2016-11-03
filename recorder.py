@@ -54,6 +54,11 @@ class Recorder(object, metaclass = ABCMeta):
     def quizName(self): pass
 
 
+    @property
+    @abstractmethod
+    def tableName(self): pass
+
+
     @abstractmethod
     def recordationFrame(self): pass
 
@@ -62,7 +67,7 @@ class Recorder(object, metaclass = ABCMeta):
     def record(self): pass
 
 
-    # @abstractmethod
+    @abstractmethod
     def edit(self, quizId): pass
 
 
@@ -72,6 +77,28 @@ class Recorder(object, metaclass = ABCMeta):
 
     @abstractmethod
     def cleanUp(self): pass
+
+
+    def getQuizData(self, quizId):
+        return self._qdManip.select(['*'], self.tableName,
+            'where id = ?', [quizId])[0]
+
+
+    def editCommon(self, quizId, subGenreId, examGenreId,
+            difficulty_min, difficulty_max,
+            comment, stable, seriesId, pictureId):
+        qdm = self._qdManager
+        genreId = self._qdManip.getGenreIdBySubGenreId(subGenreId)
+        qdm.genreId = genreId
+        qdm.subGenreId = subGenreId
+        qdm.examGenreId = examGenreId
+        qdm.difficulty_min = difficulty_min
+        qdm.difficulty_max = difficulty_max
+        qdm.comment = comment
+        qdm.stable = stable
+        qdm.seriesId = seriesId
+        qdm.pictureId = pictureId
+        qdm.setRecordMode(RecordMode.Update, quizId)
 
 
     # for Typing, Cube, Effect
@@ -137,6 +164,11 @@ class RecorderOX(Recorder):
 
 
     @property
+    def tableName(self):
+        return 'quiz_ox'
+
+
+    @property
     def _answer(self):
         return self._answerVar.get()
 
@@ -168,10 +200,10 @@ class RecorderOX(Recorder):
         question = self._questionFrame.question
         if not question:
             raise ve.QuestionBlankError
-        table = 'quiz_ox'
         columns = [
             'subgenre', 'examgenre',
-            'difficulty_min', 'difficulty_max', 'question', 'answer',
+            'difficulty_min', 'difficulty_max',
+            'question', 'answer',
             'comment', 'stable', 'series', 'picture_id'
         ]
         values = [
@@ -180,11 +212,10 @@ class RecorderOX(Recorder):
             question, self._answer,
             qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
         ]
-
         if qdm.recordMode == RecordMode.Insert:
-            self._qdManip.insert(table, columns, values)
+            self._qdManip.insert(self.tableName, columns, values)
         else:
-            self._qdManip.update(table, columns, values,
+            self._qdManip.update(self.tableName, columns, values,
                 'where id = {}'.format(quizId)
             )
             qdm.setRecordMode(RecordMode.Insert)
@@ -192,24 +223,15 @@ class RecorderOX(Recorder):
 
     def edit(self, quizId):
         qdm = self._qdManager
-        qdm.setRecordMode(RecordMode.Update, quizId)
-        quizData = self._qdManip.select(['*'], 'quiz_ox',
-            'where id = ?', [quizId])[0]
         (_, subGenreId, examGenreId, difficulty_min, difficulty_max,
             question, answer, comment,
-            stable, _, _, _, seriesId, pictureId) = quizData
-        genreId = self._qdManip.getGenreIdBySubGenreId(subGenreId)
-        qdm.genreId = genreId
-        qdm.subGenreId = subGenreId
-        qdm.examGenreId = examGenreId
-        qdm.difficulty_min = difficulty_min
-        qdm.difficulty_max = difficulty_max
+            stable, _, _, _, seriesId, pictureId
+        ) = self.getQuizData(quizId)
         self._questionFrame.question = question
         self._answer = answer
-        qdm.comment = comment
-        qdm.stable = stable
-        qdm.seriesId = seriesId
-        qdm.pictureId = pictureId
+        self.editCommon(quizId, subGenreId, examGenreId,
+            difficulty_min, difficulty_max,
+            comment, stable, seriesId, pictureId)
 
 
     def search(self):
@@ -221,10 +243,10 @@ class RecorderOX(Recorder):
             '問題', '答え', 'コメント', '安定性', 'シリーズ', '画像ID'
         )]
         result = self.selectFromJoinedTable(
-            'quiz_ox',
+            self.tableName,
             [
-                'quiz_ox.id', 'genre.genre', 'subgenre.subgenre',
-                'examgenre.examgenre',
+                '{}.id'.format(self.tableName),
+                'genre.genre', 'subgenre.subgenre', 'examgenre.examgenre',
                 'difficulty_min', 'difficulty_max', 'question',
                 "replace(replace(answer, 1, 'True'), 0, 'False')",
                 'comment', 'stable.stable', 'series.series', 'picture_id'
@@ -247,6 +269,11 @@ class RecorderFour(Recorder):
         return '四択'
 
 
+    @property
+    def tableName(self):
+        return 'quiz_four'
+
+
     def recordationFrame(self):
         outerFrame = tk.Frame()
 
@@ -265,7 +292,7 @@ class RecorderFour(Recorder):
         return outerFrame
 
 
-    def record(self, qdm):
+    def record(self, quizId = None):
         qdm = self._qdManager
         question = self._questionFrame.question
         if not question:
@@ -276,10 +303,41 @@ class RecorderFour(Recorder):
         dummy3 = self._dummy3EF.getEntryText()
         for s in (answer, dummy1, dummy2, dummy3):
             if not s: raise ve.AnswerBlankError
-        self._qdManip.registerFour(qdm.subGenreId, qdm.examGenreId,
-            qdm.difficulty_min, qdm.difficulty_max, question, answer,
-            dummy1, dummy2, dummy3,
-            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId)
+        columns = [
+            'subgenre', 'examgenre',
+            'difficulty_min', 'difficulty_max',
+            'question', 'answer', 'dummy1', 'dummy2', 'dummy3',
+            'comment', 'stable', 'series', 'picture_id'
+        ]
+        values = [
+            qdm.subGenreId, qdm.examGenreId,
+            qdm.difficulty_min, qdm.difficulty_max,
+            question, answer, dummy1, dummy2, dummy3,
+            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
+        ]
+        if qdm.recordMode == RecordMode.Insert:
+            self._qdManip.insert(self.tableName, columns, values)
+        else:
+            self._qdManip.update(self.tableName, columns, values,
+                'where id = {}'.format(quizId)
+            )
+            qdm.setRecordMode(RecordMode.Insert)
+
+
+    def edit(self, quizId):
+        qdm = self._qdManager
+        (_, subGenreId, examGenreId, difficulty_min, difficulty_max,
+            question, answer, dummy1, dummy2, dummy3, comment,
+            stable, _, _, _, seriesId, pictureId
+        ) = self.getQuizData(quizId)
+        self._questionFrame.question = question
+        self._answerEF.setEntryText(answer)
+        self._dummy1EF.setEntryText(dummy1)
+        self._dummy1EF.setEntryText(dummy2)
+        self._dummy1EF.setEntryText(dummy3)
+        self.editCommon(quizId, subGenreId, examGenreId,
+            difficulty_min, difficulty_max,
+            comment, stable, seriesId, pictureId)
 
 
     def search(self):
@@ -312,10 +370,10 @@ class RecorderFour(Recorder):
             'コメント', '安定性', 'シリーズ', '画像ID'
         )]
         result = self.selectFromJoinedTable(
-            'quiz_four',
+            self.tableName,
             [
-                'quiz_four.id', 'genre.genre', 'subgenre.subgenre',
-                'examgenre.examgenre',
+                '{}.id'.format(self.tableName),
+                'genre.genre', 'subgenre.subgenre', 'examgenre.examgenre',
                 'difficulty_min', 'difficulty_max', 'question',
                 'answer', 'dummy1', 'dummy2', 'dummy3',
                 'comment', 'stable.stable', 'series.series', 'picture_id'
@@ -339,6 +397,11 @@ class RecorderAssoc(Recorder):
     @property
     def quizName(self):
         return '連想'
+
+
+    @property
+    def tableName(self):
+        return 'quiz_assoc'
 
 
     def recordationFrame(self):
@@ -391,7 +454,7 @@ class RecorderAssoc(Recorder):
         return outerFrame
 
 
-    def record(self, qdm):
+    def record(self, quizId = None):
         qdm = self._qdManager
         question1 = self._question1EF.getEntryText()
         question2 = self._question2EF.getEntryText()
@@ -405,12 +468,48 @@ class RecorderAssoc(Recorder):
         dummy3 = self._dummy3EF.getEntryText()
         for s in (answer, dummy1, dummy2, dummy3):
             if not s: raise ve.AnswerBlankError
-
-        self._qdManip.registerAssoc(qdm.subGenreId, qdm.examGenreId,
+        columns = [
+            'subgenre', 'examgenre',
+            'difficulty_min', 'difficulty_max',
+            'question1', 'question2', 'question3', 'question4',
+            'answer', 'dummy1', 'dummy2', 'dummy3', 'assoctype',
+            'comment', 'stable', 'series', 'picture_id'
+        ]
+        values = [
+            qdm.subGenreId, qdm.examGenreId,
             qdm.difficulty_min, qdm.difficulty_max,
             question1, question2, question3, question4,
             answer, dummy1, dummy2, dummy3, self._assocTypeId,
-            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId)
+            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
+        ]
+        if qdm.recordMode == RecordMode.Insert:
+            self._qdManip.insert(self.tableName, columns, values)
+        else:
+            self._qdManip.update(self.tableName, columns, values,
+                'where id = {}'.format(quizId)
+            )
+            qdm.setRecordMode(RecordMode.Insert)
+
+
+    def edit(self, quizId):
+        qdm = self._qdManager
+        (_, subGenreId, examGenreId, difficulty_min, difficulty_max,
+            question1, question2, question3, question4,
+            answer, dummy1, dummy2, dummy3, assoctype,
+            comment, stable, _, _, _, seriesId, pictureId
+        ) = self.getQuizData(quizId)
+        self._question1EF.setEntryText(question1)
+        self._question2EF.setEntryText(question2)
+        self._question3EF.setEntryText(question3)
+        self._question4EF.setEntryText(question4)
+        self._answerEF.setEntryText(answer)
+        self._dummy1EF.setEntryText(dummy1)
+        self._dummy2EF.setEntryText(dummy2)
+        self._dummy3EF.setEntryText(dummy3)
+        self._assocTypeBox.select(assoctype)
+        self.editCommon(quizId, subGenreId, examGenreId,
+            difficulty_min, difficulty_max,
+            comment, stable, seriesId, pictureId)
 
 
     def search(self):
@@ -453,10 +552,10 @@ class RecorderAssoc(Recorder):
             'コメント', '安定性', 'シリーズ', '画像ID'
         )]
         result = self.selectFromJoinedTable(
-            'quiz_assoc',
+            self.tableName,
             [
-                'quiz_assoc.id', 'genre.genre', 'subgenre.subgenre',
-                'examgenre.examgenre',
+                '{}.id'.format(self.tableName),
+                'genre.genre', 'subgenre.subgenre', 'examgenre.examgenre',
                 'difficulty_min', 'difficulty_max',
                 'question1', 'question2', 'question3', 'question4',
                 'answer', 'dummy1', 'dummy2', 'dummy3','assoctype.assoctype',
@@ -488,6 +587,11 @@ class RecorderSort(Recorder):
         return '並替'
 
 
+    @property
+    def tableName(self):
+        return 'quiz_sort'
+
+
     def recordationFrame(self):
         outerFrame = tk.Frame()
 
@@ -500,7 +604,7 @@ class RecorderSort(Recorder):
         return outerFrame
 
 
-    def record(self, qdm):
+    def record(self, quizId = None):
         qdm = self._qdManager
         question = self._questionFrame.question
         if not question:
@@ -508,9 +612,38 @@ class RecorderSort(Recorder):
         answer = self._answerEF.getEntryText()
         if not answer:
             raise ve.AnswerBlankError
-        self._qdManip.registerSort(qdm.subGenreId, qdm.examGenreId,
-            qdm.difficulty_min, qdm.difficulty_max, question, answer,
-            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId)
+        columns = [
+            'subgenre', 'examgenre',
+            'difficulty_min', 'difficulty_max',
+            'question', 'answer',
+            'comment', 'stable', 'series', 'picture_id'
+        ]
+        values = [
+            qdm.subGenreId, qdm.examGenreId,
+            qdm.difficulty_min, qdm.difficulty_max,
+            question, answer,
+            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
+        ]
+        if qdm.recordMode == RecordMode.Insert:
+            self._qdManip.insert(self.tableName, columns, values)
+        else:
+            self._qdManip.update(self.tableName, columns, values,
+                'where id = {}'.format(quizId)
+            )
+            qdm.setRecordMode(RecordMode.Insert)
+
+
+    def edit(self, quizId):
+        qdm = self._qdManager
+        (_, subGenreId, examGenreId, difficulty_min, difficulty_max,
+            question, answer, comment,
+            stable, _, _, _, seriesId, pictureId
+        ) = self.getQuizData(quizId)
+        self._questionFrame.question = question
+        self._answerEF.setEntryText(answer)
+        self.editCommon(quizId, subGenreId, examGenreId,
+            difficulty_min, difficulty_max,
+            comment, stable, seriesId, pictureId)
 
 
     def search(self):
@@ -531,10 +664,10 @@ class RecorderSort(Recorder):
             'コメント', '安定性', 'シリーズ', '画像ID'
         )]
         result = self.selectFromJoinedTable(
-            'quiz_sort',
+            self.tableName,
             [
-                'quiz_sort.id', 'genre.genre', 'subgenre.subgenre',
-                'examgenre.examgenre',
+                '{}.id'.format(self.tableName),
+                'genre.genre', 'subgenre.subgenre', 'examgenre.examgenre',
                 'difficulty_min', 'difficulty_max',
                 'question', 'answer',
                 'comment', 'stable.stable', 'series.series', 'picture_id'
@@ -557,6 +690,11 @@ class RecorderPanel(Recorder):
         return '文字パネ'
 
 
+    @property
+    def tableName(self):
+        return 'quiz_panel'
+
+
     def recordationFrame(self):
         outerFrame = tk.Frame()
 
@@ -573,7 +711,7 @@ class RecorderPanel(Recorder):
         return outerFrame
 
 
-    def record(self, qdm):
+    def record(self, quizId = None):
         qdm = self._qdManager
         question = self._questionFrame.question
         if not question:
@@ -600,10 +738,39 @@ class RecorderPanel(Recorder):
 
         answerStr = '\n'.join(answerList)
 
-        self._qdManip.registerPanel(qdm.subGenreId, qdm.examGenreId,
+        columns = [
+            'subgenre', 'examgenre',
+            'difficulty_min', 'difficulty_max',
+            'question', 'answer', 'panel',
+            'comment', 'stable', 'series', 'picture_id'
+        ]
+        values = [
+            qdm.subGenreId, qdm.examGenreId,
             qdm.difficulty_min, qdm.difficulty_max,
             question, answerStr, panel,
-            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId)
+            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
+        ]
+        if qdm.recordMode == RecordMode.Insert:
+            self._qdManip.insert(self.tableName, columns, values)
+        else:
+            self._qdManip.update(self.tableName, columns, values,
+                'where id = {}'.format(quizId)
+            )
+            qdm.setRecordMode(RecordMode.Insert)
+
+
+    def edit(self, quizId):
+        qdm = self._qdManager
+        (_, subGenreId, examGenreId, difficulty_min, difficulty_max,
+            question, answer, panel, comment,
+            stable, _, _, _, seriesId, pictureId
+        ) = self.getQuizData(quizId)
+        self._questionFrame.question = question
+        self._answerFrame.answer = answer
+        self._panelEF.setEntryText(panel)
+        self.editCommon(quizId, subGenreId, examGenreId,
+            difficulty_min, difficulty_max,
+            comment, stable, seriesId, pictureId)
 
 
     def search(self):
@@ -631,10 +798,10 @@ class RecorderPanel(Recorder):
             'コメント', '安定性', 'シリーズ', '画像ID'
         )]
         result = self.selectFromJoinedTable(
-            'quiz_panel',
+            self.tableName,
             [
-                'quiz_panel.id', 'genre.genre', 'subgenre.subgenre',
-                'examgenre.examgenre',
+                '{}.id'.format(self.tableName),
+                'genre.genre', 'subgenre.subgenre', 'examgenre.examgenre',
                 'difficulty_min', 'difficulty_max',
                 'question', 'answer', 'panel',
                 'comment', 'stable.stable', 'series.series', 'picture_id'
@@ -658,6 +825,11 @@ class RecorderSlot(Recorder):
         return 'スロット'
 
 
+    @property
+    def tableName(self):
+        return 'quiz_slot'
+
+
     def recordationFrame(self):
         outerFrame = tk.Frame()
 
@@ -676,7 +848,7 @@ class RecorderSlot(Recorder):
         return outerFrame
 
 
-    def record(self, qdm):
+    def record(self, quizId = None):
         qdm = self._qdManager
         question = self._questionFrame.question
         if not question:
@@ -689,10 +861,41 @@ class RecorderSlot(Recorder):
             if not s: raise ve.AnswerBlankError
         if not (len(answer) == len(dummy1) == len(dummy2) == len(dummy3)):
             raise ve.SlotStrLenError
-        self._qdManip.registerSlot(qdm.subGenreId, qdm.examGenreId,
-            qdm.difficulty_min, qdm.difficulty_max, question, answer,
-            dummy1, dummy2, dummy3,
-            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId)
+        columns = [
+            'subgenre', 'examgenre',
+            'difficulty_min', 'difficulty_max',
+            'question', 'answer', 'dummy1', 'dummy2', 'dummy3',
+            'comment', 'stable', 'series', 'picture_id'
+        ]
+        values = [
+            qdm.subGenreId, qdm.examGenreId,
+            qdm.difficulty_min, qdm.difficulty_max,
+            question, answer, dummy1, dummy2, dummy3,
+            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
+        ]
+        if qdm.recordMode == RecordMode.Insert:
+            self._qdManip.insert(self.tableName, columns, values)
+        else:
+            self._qdManip.update(self.tableName, columns, values,
+                'where id = {}'.format(quizId)
+            )
+            qdm.setRecordMode(RecordMode.Insert)
+
+
+    def edit(self, quizId):
+        qdm = self._qdManager
+        (_, subGenreId, examGenreId, difficulty_min, difficulty_max,
+            question, answer, dummy1, dummy2, dummy3,
+            comment, stable, _, _, _, seriesId, pictureId
+        ) = self.getQuizData(quizId)
+        self._questionFrame.question = question
+        self._answerEF.setEntryText(answer)
+        self._dummy1EF.setEntryText(dummy1)
+        self._dummy2EF.setEntryText(dummy2)
+        self._dummy3EF.setEntryText(dummy3)
+        self.editCommon(quizId, subGenreId, examGenreId,
+            difficulty_min, difficulty_max,
+            comment, stable, seriesId, pictureId)
 
 
     def search(self):
@@ -725,10 +928,10 @@ class RecorderSlot(Recorder):
             'コメント', '安定性', 'シリーズ', '画像ID'
         )]
         result = self.selectFromJoinedTable(
-            'quiz_slot',
+            self.tableName,
             [
-                'quiz_slot.id', 'genre.genre', 'subgenre.subgenre',
-                'examgenre.examgenre',
+                '{}.id'.format(self.tableName),
+                'genre.genre', 'subgenre.subgenre', 'examgenre.examgenre',
                 'difficulty_min', 'difficulty_max', 'question',
                 'answer', 'dummy1', 'dummy2', 'dummy3',
                 'comment', 'stable.stable', 'series.series', 'picture_id'
@@ -754,6 +957,11 @@ class RecorderTyping(Recorder):
         return 'タイピ'
 
 
+    @property
+    def tableName(self):
+        return 'quiz_typing'
+
+
     def recordationFrame(self):
         outerFrame = tk.Frame()
 
@@ -765,16 +973,45 @@ class RecorderTyping(Recorder):
         return outerFrame
 
 
-    def record(self, qdm):
+    def record(self, quizId = None):
         qdm = self._qdManager
         question = self._questionFrame.question
         if not question:
             raise ve.QuestionBlankError
         rowAnswerList = self._answerFrame.answer
         (typingtype, answer) = self.getTypingTypeAndAnswer(rowAnswerList)
-        self._qdManip.registerTyping(qdm.subGenreId, qdm.examGenreId,
-            qdm.difficulty_min, qdm.difficulty_max, question, typingtype,
-            answer, qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId)
+        columns = [
+            'subgenre', 'examgenre',
+            'difficulty_min', 'difficulty_max',
+            'question', 'typingtype', 'answer',
+            'comment', 'stable', 'series', 'picture_id'
+        ]
+        values = [
+            qdm.subGenreId, qdm.examGenreId,
+            qdm.difficulty_min, qdm.difficulty_max,
+            question, typingtype, answer,
+            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
+        ]
+        if qdm.recordMode == RecordMode.Insert:
+            self._qdManip.insert(self.tableName, columns, values)
+        else:
+            self._qdManip.update(self.tableName, columns, values,
+                'where id = {}'.format(quizId)
+            )
+            qdm.setRecordMode(RecordMode.Insert)
+
+
+    def edit(self, quizId):
+        qdm = self._qdManager
+        (_, subGenreId, examGenreId, difficulty_min, difficulty_max,
+            question, _, answer, comment,
+            stable, _, _, _, seriesId, pictureId
+        ) = self.getQuizData(quizId)
+        self._questionFrame.question = question
+        self._answerFrame.answer = answer
+        self.editCommon(quizId, subGenreId, examGenreId,
+            difficulty_min, difficulty_max,
+            comment, stable, seriesId, pictureId)
 
 
     def search(self):
@@ -803,10 +1040,10 @@ class RecorderTyping(Recorder):
             'コメント', '安定性', 'シリーズ', '画像ID'
         )]
         result = self.selectFromJoinedTable(
-            'quiz_typing',
+            self.tableName,
             [
-                'quiz_typing.id', 'genre.genre', 'subgenre.subgenre',
-                'examgenre.examgenre',
+                '{}.id'.format(self.tableName),
+                'genre.genre', 'subgenre.subgenre', 'examgenre.examgenre',
                 'difficulty_min', 'difficulty_max',
                 'question', 'answer',
                 'comment', 'stable.stable', 'series.series', 'picture_id'
@@ -829,6 +1066,11 @@ class RecorderCube(Recorder):
         return 'キューブ'
 
 
+    @property
+    def tableName(self):
+        return 'quiz_cube'
+
+
     def recordationFrame(self):
         outerFrame = tk.Frame()
 
@@ -840,16 +1082,45 @@ class RecorderCube(Recorder):
         return outerFrame
 
 
-    def record(self, qdm):
+    def record(self, quizId = None):
         qdm = self._qdManager
         question = self._questionFrame.question
         if not question:
             raise ve.QuestionBlankError
         rowAnswerList = [self._answerEF.getEntryText()]
         (typingtype, answer) = self.getTypingTypeAndAnswer(rowAnswerList)
-        self._qdManip.registerCube(qdm.subGenreId, qdm.examGenreId,
-            qdm.difficulty_min, qdm.difficulty_max, question, typingtype,
-            answer, qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId)
+        columns = [
+            'subgenre', 'examgenre',
+            'difficulty_min', 'difficulty_max',
+            'question', 'typingtype', 'answer',
+            'comment', 'stable', 'series', 'picture_id'
+        ]
+        values = [
+            qdm.subGenreId, qdm.examGenreId,
+            qdm.difficulty_min, qdm.difficulty_max,
+            question, typingtype, answer,
+            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
+        ]
+        if qdm.recordMode == RecordMode.Insert:
+            self._qdManip.insert(self.tableName, columns, values)
+        else:
+            self._qdManip.update(self.tableName, columns, values,
+                'where id = {}'.format(quizId)
+            )
+            qdm.setRecordMode(RecordMode.Insert)
+
+
+    def edit(self, quizId):
+        qdm = self._qdManager
+        (_, subGenreId, examGenreId, difficulty_min, difficulty_max,
+            question, _, answer, comment,
+            stable, _, _, _, seriesId, pictureId
+        ) = self.getQuizData(quizId)
+        self._questionFrame.question = question
+        self._answerEF.setEntryText(answer)
+        self.editCommon(quizId, subGenreId, examGenreId,
+            difficulty_min, difficulty_max,
+            comment, stable, seriesId, pictureId)
 
 
     def search(self):
@@ -871,10 +1142,10 @@ class RecorderCube(Recorder):
             'コメント', '安定性', 'シリーズ', '画像ID'
         )]
         result = self.selectFromJoinedTable(
-            'quiz_cube',
+            self.tableName,
             [
-                'quiz_cube.id', 'genre.genre', 'subgenre.subgenre',
-                'examgenre.examgenre',
+                '{}.id'.format(self.tableName),
+                'genre.genre', 'subgenre.subgenre', 'examgenre.examgenre',
                 'difficulty_min', 'difficulty_max',
                 'question', 'answer',
                 'comment', 'stable.stable', 'series.series', 'picture_id'
@@ -897,6 +1168,11 @@ class RecorderEffect(Recorder):
         return 'エフェ'
 
 
+    @property
+    def tableName(self):
+        return 'quiz_effect'
+
+
     def recordationFrame(self):
         outerFrame = tk.Frame()
 
@@ -910,7 +1186,7 @@ class RecorderEffect(Recorder):
         return outerFrame
 
 
-    def record(self, qdm):
+    def record(self, quizId = None):
         qdm = self._qdManager
         question = self._questionFrame.question
         if not question:
@@ -922,10 +1198,39 @@ class RecorderEffect(Recorder):
             raise ve.AnswerBlankError
         rowAnswerList = self._answerFrame.answer
         (typingtype, answer) = self.getTypingTypeAndAnswer(rowAnswerList)
-        self._qdManip.registerEffect(qdm.subGenreId, qdm.examGenreId,
-            qdm.difficulty_min, qdm.difficulty_max, question, questionEffect,
-            typingtype, answer,
-            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId)
+        columns = [
+            'subgenre', 'examgenre',
+            'difficulty_min', 'difficulty_max',
+            'question', 'questionEffect', 'typingtype', 'answer',
+            'comment', 'stable', 'series', 'picture_id'
+        ]
+        values = [
+            qdm.subGenreId, qdm.examGenreId,
+            qdm.difficulty_min, qdm.difficulty_max,
+            question, questionEffect, typingtype, answer,
+            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
+        ]
+        if qdm.recordMode == RecordMode.Insert:
+            self._qdManip.insert(self.tableName, columns, values)
+        else:
+            self._qdManip.update(self.tableName, columns, values,
+                'where id = {}'.format(quizId)
+            )
+            qdm.setRecordMode(RecordMode.Insert)
+
+
+    def edit(self, quizId):
+        qdm = self._qdManager
+        (_, subGenreId, examGenreId, difficulty_min, difficulty_max,
+            question, questionEffect, _, answer, comment,
+            stable, _, _, _, seriesId, pictureId
+        ) = self.getQuizData(quizId)
+        self._questionFrame.question = question
+        self._questionEF.setEntryText(questionEffect)
+        self._answerFrame.answer = answer
+        self.editCommon(quizId, subGenreId, examGenreId,
+            difficulty_min, difficulty_max,
+            comment, stable, seriesId, pictureId)
 
 
     def search(self):
@@ -957,10 +1262,10 @@ class RecorderEffect(Recorder):
             'コメント', '安定性', 'シリーズ', '画像ID'
         )]
         result = self.selectFromJoinedTable(
-            'quiz_effect',
+            self.tableName,
             [
-                'quiz_effect.id', 'genre.genre', 'subgenre.subgenre',
-                'examgenre.examgenre',
+                '{}.id'.format(self.tableName),
+                'genre.genre', 'subgenre.subgenre', 'examgenre.examgenre',
                 'difficulty_min', 'difficulty_max',
                 'question', 'questionEffect', 'answer',
                 'comment', 'stable.stable', 'series.series', 'picture_id'
@@ -982,6 +1287,11 @@ class RecorderOrder(Recorder):
     @property
     def quizName(self):
         return '順当'
+
+
+    @property
+    def tableName(self):
+        return 'quiz_order'
 
 
     def recordationFrame(self):
@@ -1011,7 +1321,7 @@ class RecorderOrder(Recorder):
         return outerFrame
 
 
-    def record(self, qdm):
+    def record(self, quizId = None):
         qdm = self._qdManager
         question = self._questionFrame.question
         if not question:
@@ -1020,10 +1330,39 @@ class RecorderOrder(Recorder):
         if not answerList:
             raise ve.AnswerBlankError
         answerStr = '\n'.join(answerList)
-        self._qdManip.registerOrder(qdm.subGenreId, qdm.examGenreId,
-            qdm.difficulty_min, qdm.difficulty_max, question, answerStr,
-            self._multiTypeId,
-            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId)
+        columns = [
+            'subgenre', 'examgenre',
+            'difficulty_min', 'difficulty_max',
+            'question', 'answer', 'multitype',
+            'comment', 'stable', 'series', 'picture_id'
+        ]
+        values = [
+            qdm.subGenreId, qdm.examGenreId,
+            qdm.difficulty_min, qdm.difficulty_max,
+            question, answerStr, self._multiTypeId,
+            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
+        ]
+        if qdm.recordMode == RecordMode.Insert:
+            self._qdManip.insert(self.tableName, columns, values)
+        else:
+            self._qdManip.update(self.tableName, columns, values,
+                'where id = {}'.format(quizId)
+            )
+            qdm.setRecordMode(RecordMode.Insert)
+
+
+    def edit(self, quizId):
+        qdm = self._qdManager
+        (_, subGenreId, examGenreId, difficulty_min, difficulty_max,
+            question, answer, multitype, comment,
+            stable, _, _, _, seriesId, pictureId
+        ) = self.getQuizData(quizId)
+        self._questionFrame.question = question
+        self._answerFrame.answer = answer
+        self._multiTypeBox.select(multitype)
+        self.editCommon(quizId, subGenreId, examGenreId,
+            difficulty_min, difficulty_max,
+            comment, stable, seriesId, pictureId)
 
 
     def search(self):
@@ -1050,10 +1389,10 @@ class RecorderOrder(Recorder):
             'コメント', '安定性', 'シリーズ', '画像ID'
         )]
         result = self.selectFromJoinedTable(
-            'quiz_order',
+            self.tableName,
             [
-                'quiz_order.id', 'genre.genre', 'subgenre.subgenre',
-                'examgenre.examgenre',
+                '{}.id'.format(self.tableName),
+                'genre.genre', 'subgenre.subgenre', 'examgenre.examgenre',
                 'difficulty_min', 'difficulty_max',
                 'question', 'answer', 'multitype.multitype',
                 'comment', 'stable.stable', 'series.series', 'picture_id'
@@ -1076,6 +1415,11 @@ class RecorderConnect(Recorder):
     @property
     def quizName(self):
         return '線結'
+
+
+    @property
+    def tableName(self):
+        return 'quiz_connect'
 
 
     def recordationFrame(self):
@@ -1113,7 +1457,7 @@ class RecorderConnect(Recorder):
         return outerFrame
 
 
-    def record(self, qdm):
+    def record(self, quizId = None):
         qdm = self._qdManager
         question = self._questionFrame.question
         if not question:
@@ -1124,11 +1468,40 @@ class RecorderConnect(Recorder):
             raise ve.AnswerBlankError
         optionLeftStr = '\n'.join(optionLeft)
         optionRightStr = '\n'.join(optionRight)
-        self._qdManip.registerConnect(qdm.subGenreId, qdm.examGenreId,
-            qdm.difficulty_min, qdm.difficulty_max, question,
-            optionLeftStr, optionRightStr,
-            self._multiTypeId,
-            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId)
+        columns = [
+            'subgenre', 'examgenre',
+            'difficulty_min', 'difficulty_max',
+            'question', 'option_left', 'option_right', 'multitype',
+            'comment', 'stable', 'series', 'picture_id'
+        ]
+        values = [
+            qdm.subGenreId, qdm.examGenreId,
+            qdm.difficulty_min, qdm.difficulty_max,
+            question, optionLeftStr, optionRightStr, self._multiTypeId,
+            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
+        ]
+        if qdm.recordMode == RecordMode.Insert:
+            self._qdManip.insert(self.tableName, columns, values)
+        else:
+            self._qdManip.update(self.tableName, columns, values,
+                'where id = {}'.format(quizId)
+            )
+            qdm.setRecordMode(RecordMode.Insert)
+
+
+    def edit(self, quizId):
+        qdm = self._qdManager
+        (_, subGenreId, examGenreId, difficulty_min, difficulty_max,
+            question, option_left, option_right, multitype, comment,
+            stable, _, _, _, seriesId, pictureId
+        ) = self.getQuizData(quizId)
+        self._questionFrame.question = question
+        self._optionLeftFrame.answer = option_left
+        self._optionRightFrame.answer = option_right
+        self._multiTypeBox.select(multitype)
+        self.editCommon(quizId, subGenreId, examGenreId,
+            difficulty_min, difficulty_max,
+            comment, stable, seriesId, pictureId)
 
 
     def search(self):
@@ -1169,10 +1542,10 @@ class RecorderConnect(Recorder):
             'コメント', '安定性', 'シリーズ', '画像ID'
         )]
         result = self.selectFromJoinedTable(
-            'quiz_connect',
+            self.tableName,
             [
-                'quiz_connect.id', 'genre.genre', 'subgenre.subgenre',
-                'examgenre.examgenre',
+                '{}.id'.format(self.tableName),
+                'genre.genre', 'subgenre.subgenre', 'examgenre.examgenre',
                 'difficulty_min', 'difficulty_max', 'question',
                 'option_left', 'option_right', 'multitype.multitype',
                 'comment', 'stable.stable', 'series.series', 'picture_id'
@@ -1196,6 +1569,11 @@ class RecorderMulti(Recorder):
     @property
     def quizName(self):
         return '多答'
+
+
+    @property
+    def tableName(self):
+        return 'quiz_multi'
 
 
     def recordationFrame(self):
@@ -1233,7 +1611,7 @@ class RecorderMulti(Recorder):
         return outerFrame
 
 
-    def record(self, qdm):
+    def record(self, quizId = None):
         qdm = self._qdManager
         question = self._questionFrame.question
         if not question:
@@ -1244,11 +1622,40 @@ class RecorderMulti(Recorder):
             raise ve.AnswerBlankError
         answerStr = '\n'.join(answerList)
         dummyStr = '\n'.join(dummyList)
-        self._qdManip.registerMulti(qdm.subGenreId, qdm.examGenreId,
-            qdm.difficulty_min, qdm.difficulty_max, question,
-            answerStr, dummyStr,
-            self._multiTypeId,
-            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId)
+        columns = [
+            'subgenre', 'examgenre',
+            'difficulty_min', 'difficulty_max',
+            'question', 'answer', 'dummy', 'multitype',
+            'comment', 'stable', 'series', 'picture_id'
+        ]
+        values = [
+            qdm.subGenreId, qdm.examGenreId,
+            qdm.difficulty_min, qdm.difficulty_max,
+            question, answerStr, dummyStr, self._multiTypeId,
+            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
+        ]
+        if qdm.recordMode == RecordMode.Insert:
+            self._qdManip.insert(self.tableName, columns, values)
+        else:
+            self._qdManip.update(self.tableName, columns, values,
+                'where id = {}'.format(quizId)
+            )
+            qdm.setRecordMode(RecordMode.Insert)
+
+
+    def edit(self, quizId):
+        qdm = self._qdManager
+        (_, subGenreId, examGenreId, difficulty_min, difficulty_max,
+            question, answer, dummy, multitype, comment,
+            stable, _, _, _, seriesId, pictureId
+        ) = self.getQuizData(quizId)
+        self._questionFrame.question = question
+        self._answerFrame.answer = answer
+        self._dummyFrame.answer = dummy
+        self._multiTypeBox.select(multitype)
+        self.editCommon(quizId, subGenreId, examGenreId,
+            difficulty_min, difficulty_max,
+            comment, stable, seriesId, pictureId)
 
 
     def search(self):
@@ -1287,10 +1694,10 @@ class RecorderMulti(Recorder):
             'コメント', '安定性', 'シリーズ', '画像ID'
         )]
         result = self.selectFromJoinedTable(
-            'quiz_multi',
+            self.tableName,
             [
-                'quiz_multi.id', 'genre.genre', 'subgenre.subgenre',
-                'examgenre.examgenre',
+                '{}.id'.format(self.tableName),
+                'genre.genre', 'subgenre.subgenre', 'examgenre.examgenre',
                 'difficulty_min', 'difficulty_max', 'question',
                 'answer', 'dummy', 'multitype.multitype',
                 'comment', 'stable.stable', 'series.series', 'picture_id'
@@ -1314,6 +1721,11 @@ class RecorderGroup(Recorder):
     @property
     def quizName(self):
         return 'グル分け'
+
+
+    @property
+    def tableName(self):
+        return 'quiz_group'
 
 
     def recordationFrame(self):
@@ -1356,7 +1768,7 @@ class RecorderGroup(Recorder):
         return outerFrame
 
 
-    def record(self, qdm):
+    def record(self, quizId = None):
         qdm = self._qdManager
         question = self._questionFrame.question
         if not question:
@@ -1369,11 +1781,41 @@ class RecorderGroup(Recorder):
         group1Str = '\n'.join(group1List)
         group2Str = '\n'.join(group2List)
         group3Str = '\n'.join(group3List)
-        self._qdManip.registerGroup(qdm.subGenreId, qdm.examGenreId,
-            qdm.difficulty_min, qdm.difficulty_max, question,
-            group1Str, group2Str, group3Str,
-            self._multiTypeId,
-            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId)
+        columns = [
+            'subgenre', 'examgenre',
+            'difficulty_min', 'difficulty_max',
+            'question', 'group1', 'group2', 'group3', 'multitype',
+            'comment', 'stable', 'series', 'picture_id'
+        ]
+        values = [
+            qdm.subGenreId, qdm.examGenreId,
+            qdm.difficulty_min, qdm.difficulty_max,
+            question, group1Str, group2Str, group3Str, self._multiTypeId,
+            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
+        ]
+        if qdm.recordMode == RecordMode.Insert:
+            self._qdManip.insert(self.tableName, columns, values)
+        else:
+            self._qdManip.update(self.tableName, columns, values,
+                'where id = {}'.format(quizId)
+            )
+            qdm.setRecordMode(RecordMode.Insert)
+
+
+    def edit(self, quizId):
+        qdm = self._qdManager
+        (_, subGenreId, examGenreId, difficulty_min, difficulty_max,
+            question, group1, group2, group3, multitype, comment,
+            stable, _, _, _, seriesId, pictureId
+        ) = self.getQuizData(quizId)
+        self._questionFrame.question = question
+        self._group1Frame.answer = group1
+        self._group2Frame.answer = group2
+        self._group3Frame.answer = group3
+        self._multiTypeBox.select(multitype)
+        self.editCommon(quizId, subGenreId, examGenreId,
+            difficulty_min, difficulty_max,
+            comment, stable, seriesId, pictureId)
 
 
     def search(self):
@@ -1407,10 +1849,10 @@ class RecorderGroup(Recorder):
             'コメント', '安定性', 'シリーズ', '画像ID'
         )]
         result = self.selectFromJoinedTable(
-            'quiz_group',
+            self.tableName,
             [
-                'quiz_group.id', 'genre.genre', 'subgenre.subgenre',
-                'examgenre.examgenre',
+                '{}.id'.format(self.tableName),
+                'genre.genre', 'subgenre.subgenre', 'examgenre.examgenre',
                 'difficulty_min', 'difficulty_max', 'question',
                 'group1', 'group2', 'group3', 'multitype.multitype',
                 'comment', 'stable.stable', 'series.series', 'picture_id'
@@ -1435,6 +1877,11 @@ class RecorderFirstcome(Recorder):
     @property
     def quizName(self):
         return '早勝ち'
+
+
+    @property
+    def tableName(self):
+        return 'quiz_firstcome'
 
 
     def recordationFrame(self):
@@ -1472,7 +1919,7 @@ class RecorderFirstcome(Recorder):
         return outerFrame
 
 
-    def record(self, qdm):
+    def record(self, quizId = None):
         qdm = self._qdManager
         question = self._questionFrame.question
         if not question:
@@ -1483,11 +1930,40 @@ class RecorderFirstcome(Recorder):
             raise ve.AnswerBlankError
         answerStr = '\n'.join(answerList)
         dummyStr = '\n'.join(dummyList)
-        self._qdManip.registerFirstcome(qdm.subGenreId, qdm.examGenreId,
-            qdm.difficulty_min, qdm.difficulty_max, question,
-            answerStr, dummyStr,
-            self._multiTypeId,
-            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId)
+        columns = [
+            'subgenre', 'examgenre',
+            'difficulty_min', 'difficulty_max',
+            'question', 'answer', 'dummy', 'multitype',
+            'comment', 'stable', 'series', 'picture_id'
+        ]
+        values = [
+            qdm.subGenreId, qdm.examGenreId,
+            qdm.difficulty_min, qdm.difficulty_max,
+            question, answerStr, dummyStr, self._multiTypeId,
+            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
+        ]
+        if qdm.recordMode == RecordMode.Insert:
+            self._qdManip.insert(self.tableName, columns, values)
+        else:
+            self._qdManip.update(self.tableName, columns, values,
+                'where id = {}'.format(quizId)
+            )
+            qdm.setRecordMode(RecordMode.Insert)
+
+
+    def edit(self, quizId):
+        qdm = self._qdManager
+        (_, subGenreId, examGenreId, difficulty_min, difficulty_max,
+            question, answer, dummy, multitype, comment,
+            stable, _, _, _, seriesId, pictureId
+        ) = self.getQuizData(quizId)
+        self._questionFrame.question = question
+        self._answerFrame.answer = answer
+        self._dummyFrame.answer = dummy
+        self._multiTypeBox.select(multitype)
+        self.editCommon(quizId, subGenreId, examGenreId,
+            difficulty_min, difficulty_max,
+            comment, stable, seriesId, pictureId)
 
 
     def search(self):
@@ -1526,10 +2002,10 @@ class RecorderFirstcome(Recorder):
             'コメント', '安定性', 'シリーズ', '画像ID'
         )]
         result = self.selectFromJoinedTable(
-            'quiz_firstcome',
+            self.tableName,
             [
-                'quiz_firstcome.id', 'genre.genre', 'subgenre.subgenre',
-                'examgenre.examgenre',
+                '{}.id'.format(self.tableName),
+                'genre.genre', 'subgenre.subgenre', 'examgenre.examgenre',
                 'difficulty_min', 'difficulty_max', 'question',
                 'answer', 'dummy', 'multitype.multitype',
                 'comment', 'stable.stable', 'series.series', 'picture_id'
@@ -1553,6 +2029,11 @@ class RecorderImagetouch(Recorder):
     @property
     def quizName(self):
         return '画タッチ'
+
+
+    @property
+    def tableName(self):
+        return 'quiz_imagetouch'
 
 
     @property
@@ -1586,16 +2067,44 @@ class RecorderImagetouch(Recorder):
         return outerFrame
 
 
-    def record(self, qdm):
+    def record(self, quizId = None):
         qdm = self._qdManager
         question = self._questionFrame.question
         if not question:
             raise ve.QuestionBlankError
         pictureAnswerId = self._pictureAnswerId
-        self._qdManip.registerImagetouch(qdm.subGenreId, qdm.examGenreId,
-            qdm.difficulty_min, qdm.difficulty_max, question,
-            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId,
-            pictureAnswerId)
+        columns = [
+            'subgenre', 'examgenre',
+            'difficulty_min', 'difficulty_max',
+            'question', 'comment', 'stable',
+            'series', 'picture_id', 'picture_answer_id'
+        ]
+        values = [
+            qdm.subGenreId, qdm.examGenreId,
+            qdm.difficulty_min, qdm.difficulty_max,
+            question, qdm.comment, qdm.stable,
+            qdm.seriesId, qdm.pictureId, pictureAnswerId
+        ]
+        if qdm.recordMode == RecordMode.Insert:
+            self._qdManip.insert(self.tableName, columns, values)
+        else:
+            self._qdManip.update(self.tableName, columns, values,
+                'where id = {}'.format(quizId)
+            )
+            qdm.setRecordMode(RecordMode.Insert)
+
+
+    def edit(self, quizId):
+        qdm = self._qdManager
+        (_, subGenreId, examGenreId, difficulty_min, difficulty_max,
+            question, comment,
+            stable, _, _, _, seriesId, pictureId, pictureAnswerId
+        ) = self.getQuizData(quizId)
+        self._questionFrame.question = question
+        self._pictureAnswerId = pictureAnswerId
+        self.editCommon(quizId, subGenreId, examGenreId,
+            difficulty_min, difficulty_max,
+            comment, stable, seriesId, pictureId)
 
 
     def search(self):
@@ -1613,10 +2122,10 @@ class RecorderImagetouch(Recorder):
             'コメント', '安定性', 'シリーズ', '画像ID', '答え画像ID'
         )]
         result = self.selectFromJoinedTable(
-            'quiz_imagetouch',
+            self.tableName,
             [
-                'quiz_imagetouch.id', 'genre.genre', 'subgenre.subgenre',
-                'examgenre.examgenre',
+                '{}.id'.format(self.tableName),
+                'genre.genre', 'subgenre.subgenre', 'examgenre.examgenre',
                 'difficulty_min', 'difficulty_max',
                 'question', 'comment', 'stable.stable', 'series.series',
                 'picture_id', 'picture_answer_id'

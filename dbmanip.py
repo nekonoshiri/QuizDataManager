@@ -38,12 +38,13 @@ class DBManip(object):
         columnstr = ','.join(columns)
         valuestrQ = (', ?' * len (values))[1:]
         return self.execute(
-            'insert into {} ({}) values ({})'.format(table, columnstr, valuestrQ),
+            'insert into {} ({}) values ({})'.format(table,
+                columnstr, valuestrQ),
             values
         )
 
 
-    # ex) db.update('mytable', ['id', 'name'], [1, 'mimi'])
+    # ex) db.update('mytable', ['name'], ['tama'], 'where id = 1')
     def update(self, table, columns, values, cond, params = []):
         setStr = ','.join(
             ['{} = ?'.format(col) for col in columns]
@@ -59,7 +60,8 @@ class QuestionDataDBManip(DBManip):
     def __init__(self, filePath):
         super().__init__(filePath)
         self.__genreList = self.select(['id', 'genre'], 'genre')
-        self.__subGenreList = self.select(['id', 'subgenre', 'genre'], 'subgenre')
+        self.__subGenreList = self.select(['id', 'subgenre', 'genre'],
+            'subgenre')
         self.__examGenreList = self.select(['id', 'examgenre'], 'examgenre')
         self.__seriesList = self.select(['id', 'series'], 'series')
         self.__assocTypeList = self.select(['id', 'assoctype'], 'assoctype')
@@ -128,212 +130,4 @@ class QuestionDataDBManip(DBManip):
 
     def getSeriesNameById(self, seriesId):
         return [s for (i, s) in self.__seriesList if i == seriesId][0]
-
-
-    def registerFour(self, subGenreId: int, examGenreId: int,
-            difficulty_min: int, difficulty_max: int, question: str, answer: str,
-            dummy1: str, dummy2: str, dummy3: str,
-            comment: str, stable: bool, seriesId: int, pictureId: int):
-        self.insert(
-            'quiz_four',
-            ['subgenre', 'examgenre', 'difficulty_min', 'difficulty_max',
-             'question', 'answer', 'dummy1', 'dummy2', 'dummy3',
-             'comment', 'stable', 'series', 'picture_id'],
-            [subGenreId, examGenreId, difficulty_min, difficulty_max,
-             question, answer, dummy1, dummy2, dummy3,
-             comment, stable, seriesId, pictureId]
-        )
-
-
-    def registerAssoc(self, subGenreId: int, examGenreId: int,
-            difficulty_min: int, difficulty_max: int,
-            question1: str, question2: str, question3: str, question4:str,
-            answer: str, dummy1: str, dummy2: str, dummy3: str, assoctype: int,
-            comment: str, stable: bool, seriesId: int, pictureId: int):
-        self.insert(
-            'quiz_assoc',
-            ['subgenre', 'examgenre', 'difficulty_min', 'difficulty_max',
-             'question1', 'question2', 'question3', 'question4',
-             'answer', 'dummy1', 'dummy2', 'dummy3', 'assoctype',
-             'comment', 'stable', 'series', 'picture_id'],
-            [subGenreId, examGenreId, difficulty_min, difficulty_max,
-             question1, question2, question3, question4,
-             answer, dummy1, dummy2, dummy3, assoctype,
-             comment, stable, seriesId, pictureId]
-        )
-
-
-    def registerSort(self, subGenreId: int, examGenreId: int,
-            difficulty_min: int, difficulty_max: int, question: str,
-            answer: str, comment: str, stable: bool, seriesId: int,
-            pictureId: int):
-        self.insert(
-            'quiz_sort',
-            ['subgenre', 'examgenre', 'difficulty_min', 'difficulty_max',
-             'question', 'answer', 'comment', 'stable', 'series', 'picture_id'],
-            [subGenreId, examGenreId, difficulty_min, difficulty_max,
-             question, answer, comment, stable, seriesId, pictureId]
-        )
-
-
-    def registerPanel(self, subGenreId: int, examGenreId: int,
-            difficulty_min: int, difficulty_max: int, question: str,
-            answer: str, panel: str, comment: str, stable: bool, seriesId: int,
-            pictureId: int):
-        self.insert(
-            'quiz_panel',
-            ['subgenre', 'examgenre', 'difficulty_min', 'difficulty_max',
-             'question', 'answer', 'panel', 'comment', 'stable', 'series',
-             'picture_id'],
-            [subGenreId, examGenreId, difficulty_min, difficulty_max,
-             question, answer, panel, comment, stable, seriesId, pictureId]
-        )
-
-
-    def registerSlot(self, subGenreId: int, examGenreId: int,
-            difficulty_min: int, difficulty_max: int, question: str,
-            answer: str, dummy1: str, dummy2: str, dummy3: str,
-            comment: str, stable: bool, seriesId: int, pictureId: int):
-        self.insert(
-            'quiz_slot',
-            ['subgenre', 'examgenre', 'difficulty_min', 'difficulty_max',
-             'question', 'answer', 'dummy1', 'dummy2', 'dummy3',
-             'comment', 'stable', 'series', 'picture_id'],
-            [subGenreId, examGenreId, difficulty_min, difficulty_max,
-             question, answer, dummy1, dummy2, dummy3,
-             comment, stable, seriesId, pictureId]
-        )
-
-
-    def registerTyping(self, subGenreId: int, examGenreId: int,
-            difficulty_min: int, difficulty_max: int, question: str,
-            typingtype: int, answer: str, comment: str, stable: bool,
-            seriesId: int, pictureId: int):
-        self.insert(
-            'quiz_typing',
-            ['subgenre', 'examgenre', 'difficulty_min', 'difficulty_max',
-             'question', 'typingtype', 'answer', 'comment', 'stable', 'series',
-             'picture_id'],
-            [subGenreId, examGenreId, difficulty_min, difficulty_max,
-             question, typingtype, answer, comment, stable, seriesId, pictureId]
-        )
-
-
-    def registerCube(self, subGenreId: int, examGenreId: int,
-            difficulty_min: int, difficulty_max: int, question: str,
-            typingtype: int, answer: str, comment: str, stable: bool,
-            seriesId: int, pictureId: int):
-        self.insert(
-            'quiz_cube',
-            ['subgenre', 'examgenre', 'difficulty_min', 'difficulty_max',
-             'question', 'typingtype', 'answer', 'comment', 'stable', 'series',
-             'picture_id'],
-            [subGenreId, examGenreId, difficulty_min, difficulty_max,
-             question, typingtype, answer, comment, stable, seriesId, pictureId]
-        )
-
-
-    def registerEffect(self, subGenreId: int, examGenreId: int,
-            difficulty_min: int, difficulty_max: int,
-            question: str, questionEffect: str, typingtype: int, answer: str,
-            comment: str, stable: bool, seriesId: int, pictureId: int):
-        self.insert(
-            'quiz_effect',
-            ['subgenre', 'examgenre', 'difficulty_min', 'difficulty_max',
-             'question', 'questionEffect', 'typingtype',
-             'answer', 'comment', 'stable', 'series', 'picture_id'],
-            [subGenreId, examGenreId, difficulty_min, difficulty_max,
-             question, questionEffect, typingtype,
-             answer, comment, stable, seriesId, pictureId]
-        )
-
-
-    def registerOrder(self, subGenreId: int, examGenreId: int,
-            difficulty_min: int, difficulty_max: int,
-            question: str, answer: str, multitypeId: int,
-            comment: str, stable: bool, seriesId: int, pictureId: int):
-        self.insert(
-            'quiz_order',
-            ['subgenre', 'examgenre', 'difficulty_min', 'difficulty_max',
-             'question', 'answer', 'multitype',
-             'comment', 'stable', 'series', 'picture_id'],
-            [subGenreId, examGenreId, difficulty_min, difficulty_max,
-             question, answer, multitypeId,
-             comment, stable, seriesId, pictureId]
-        )
-
-
-    def registerConnect(self, subGenreId: int, examGenreId: int,
-            difficulty_min: int, difficulty_max: int, question: str,
-            option_left: str, option_right: str, multitypeId: int,
-            comment: str, stable: bool, seriesId: int, pictureId: int):
-        self.insert(
-            'quiz_connect',
-            ['subgenre', 'examgenre', 'difficulty_min', 'difficulty_max',
-             'question', 'option_left', 'option_right', 'multitype',
-             'comment', 'stable', 'series', 'picture_id'],
-            [subGenreId, examGenreId, difficulty_min, difficulty_max,
-             question, option_left, option_right, multitypeId,
-             comment, stable, seriesId, pictureId]
-        )
-
-
-    def registerMulti(self, subGenreId: int, examGenreId: int,
-            difficulty_min: int, difficulty_max: int,
-            question: str, answer: str, dummy: str, multitypeId: int,
-            comment: str, stable: bool, seriesId: int, pictureId: int):
-        self.insert(
-            'quiz_multi',
-            ['subgenre', 'examgenre', 'difficulty_min', 'difficulty_max',
-             'question', 'answer', 'dummy', 'multitype',
-             'comment', 'stable', 'series', 'picture_id'],
-            [subGenreId, examGenreId, difficulty_min, difficulty_max,
-             question, answer, dummy, multitypeId,
-             comment, stable, seriesId, pictureId]
-        )
-
-
-    def registerGroup(self, subGenreId: int, examGenreId: int,
-            difficulty_min: int, difficulty_max: int, question: str,
-            group1: str, group2: str, group3: str, multitypeId: int,
-            comment: str, stable: bool, seriesId: int, pictureId: int):
-        self.insert(
-            'quiz_group',
-            ['subgenre', 'examgenre', 'difficulty_min', 'difficulty_max',
-             'question', 'group1', 'group2', 'group3', 'multitype',
-             'comment', 'stable', 'series', 'picture_id'],
-            [subGenreId, examGenreId, difficulty_min, difficulty_max,
-             question, group1, group2, group3, multitypeId,
-             comment, stable, seriesId, pictureId]
-        )
-
-
-    def registerFirstcome(self, subGenreId: int, examGenreId: int,
-            difficulty_min: int, difficulty_max: int, question: str,
-            answer: str, dummy: str, multitypeId: int,
-            comment: str, stable: bool, seriesId: int, pictureId: int):
-        self.insert(
-            'quiz_firstcome',
-            ['subgenre', 'examgenre', 'difficulty_min', 'difficulty_max',
-             'question', 'answer', 'dummy', 'multitype',
-             'comment', 'stable', 'series', 'picture_id'],
-            [subGenreId, examGenreId, difficulty_min, difficulty_max,
-             question, answer, dummy, multitypeId,
-             comment, stable, seriesId, pictureId]
-        )
-
-
-    def registerImagetouch(self, subGenreId: int, examGenreId: int,
-            difficulty_min: int, difficulty_max: int, question: str,
-            comment: str, stable: bool, seriesId: int,
-            pictureId: int, picture_answer_id: int):
-        self.insert(
-            'quiz_imagetouch',
-            ['subgenre', 'examgenre', 'difficulty_min', 'difficulty_max',
-             'question', 'comment', 'stable', 'series',
-             'picture_id', 'picture_answer_id'],
-            [subGenreId, examGenreId, difficulty_min, difficulty_max,
-             question, comment, stable, seriesId,
-             pictureId, picture_answer_id]
-        )
 
