@@ -406,7 +406,8 @@ class SearchWindow(tk.Toplevel):
         searchResult = self.__recorder.search()
         for (rowIx, rowItem) in enumerate(searchResult):
             for (columnIx, columnItem) in enumerate(rowItem):
-                l = tk.Label(self, text = columnItem, relief = tk.RIDGE)
+                l = tk.Label(self, text = columnItem, relief = tk.RIDGE,
+                    justify = tk.LEFT, wraplength = 150)
                 l.grid(row = rowIx, column = columnIx,
                     sticky = tk.W + tk.E + tk.N + tk.S)
             if rowIx > 0:
