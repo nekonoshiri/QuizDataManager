@@ -5,7 +5,7 @@ import tkinter as tk
 from tkcommon import QuestionFrame, AnswerTextFrame, EntryFrame
 from tkhelper import ListboxIdd
 from mojiutil import MojiUtil
-from quizdatamanager import QuizDataManager
+from quizdatamanager import RecordMode
 import validationException as ve
 
 
@@ -43,8 +43,10 @@ class Recorder(object, metaclass = ABCMeta):
     RecorderList = []
 
 
-    def __init__(self, qdManip):
+    def __init__(self, qdManip, qdManager):
         self._qdManip = qdManip
+        self._qdManager = qdManager
+        self._recordMode = RecordMode.Insert
 
 
     @property
@@ -57,7 +59,11 @@ class Recorder(object, metaclass = ABCMeta):
 
 
     @abstractmethod
-    def record(self, comment, stable, pictureId): pass
+    def record(self): pass
+
+
+    # @abstractmethod
+    def edit(self, quizId): pass
 
 
     @abstractmethod
@@ -119,8 +125,8 @@ class Recorder(object, metaclass = ABCMeta):
 
 @recorder
 class RecorderOX(Recorder):
-    def __init__(self, qdManip):
-        super().__init__(qdManip)
+    def __init__(self, qdManip, qdManager):
+        super().__init__(qdManip, qdManager)
         self._answerVar = tk.BooleanVar()
         self._answer = True
 
@@ -157,14 +163,53 @@ class RecorderOX(Recorder):
         return outerFrame
 
 
-    def record(self, comment, stable, pictureId):
-        qdm = QuizDataManager
+    def record(self, quizId = None):
+        qdm = self._qdManager
         question = self._questionFrame.question
         if not question:
             raise ve.QuestionBlankError
-        self._qdManip.registerOX(qdm.subGenreId, qdm.examGenreId,
-            qdm.difficulty_min, qdm.difficulty_max, question, self._answer,
-            comment, stable, qdm.seriesId, pictureId)
+        table = 'quiz_ox'
+        columns = [
+            'subgenre', 'examgenre',
+            'difficulty_min', 'difficulty_max', 'question', 'answer',
+            'comment', 'stable', 'series', 'picture_id'
+        ]
+        values = [
+            qdm.subGenreId, qdm.examGenreId,
+            qdm.difficulty_min, qdm.difficulty_max,
+            question, self._answer,
+            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
+        ]
+
+        if qdm.recordMode == RecordMode.Insert:
+            self._qdManip.insert(table, columns, values)
+        else:
+            self._qdManip.update(table, columns, values,
+                'where id = {}'.format(quizId)
+            )
+            qdm.setRecordMode(RecordMode.Insert)
+
+
+    def edit(self, quizId):
+        qdm = self._qdManager
+        qdm.setRecordMode(RecordMode.Update, quizId)
+        quizData = self._qdManip.select(['*'], 'quiz_ox',
+            'where id = ?', [quizId])[0]
+        (_, subGenreId, examGenreId, difficulty_min, difficulty_max,
+            question, answer, comment,
+            stable, _, _, _, seriesId, pictureId) = quizData
+        genreId = self._qdManip.getGenreIdBySubGenreId(subGenreId)
+        qdm.genreId = genreId
+        qdm.subGenreId = subGenreId
+        qdm.examGenreId = examGenreId
+        qdm.difficulty_min = difficulty_min
+        qdm.difficulty_max = difficulty_max
+        self._questionFrame.question = question
+        self._answer = answer
+        qdm.comment = comment
+        qdm.stable = stable
+        qdm.seriesId = seriesId
+        qdm.pictureId = pictureId
 
 
     def search(self):
@@ -220,8 +265,8 @@ class RecorderFour(Recorder):
         return outerFrame
 
 
-    def record(self, comment, stable, pictureId):
-        qdm = QuizDataManager
+    def record(self, qdm):
+        qdm = self._qdManager
         question = self._questionFrame.question
         if not question:
             raise ve.QuestionBlankError
@@ -233,7 +278,8 @@ class RecorderFour(Recorder):
             if not s: raise ve.AnswerBlankError
         self._qdManip.registerFour(qdm.subGenreId, qdm.examGenreId,
             qdm.difficulty_min, qdm.difficulty_max, question, answer,
-            dummy1, dummy2, dummy3, comment, stable, qdm.seriesId, pictureId)
+            dummy1, dummy2, dummy3,
+            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId)
 
 
     def search(self):
@@ -345,8 +391,8 @@ class RecorderAssoc(Recorder):
         return outerFrame
 
 
-    def record(self, comment, stable, pictureId):
-        qdm = QuizDataManager
+    def record(self, qdm):
+        qdm = self._qdManager
         question1 = self._question1EF.getEntryText()
         question2 = self._question2EF.getEntryText()
         question3 = self._question3EF.getEntryText()
@@ -364,7 +410,7 @@ class RecorderAssoc(Recorder):
             qdm.difficulty_min, qdm.difficulty_max,
             question1, question2, question3, question4,
             answer, dummy1, dummy2, dummy3, self._assocTypeId,
-            comment, stable, qdm.seriesId, pictureId)
+            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId)
 
 
     def search(self):
@@ -454,8 +500,8 @@ class RecorderSort(Recorder):
         return outerFrame
 
 
-    def record(self, comment, stable, pictureId):
-        qdm = QuizDataManager
+    def record(self, qdm):
+        qdm = self._qdManager
         question = self._questionFrame.question
         if not question:
             raise ve.QuestionBlankError
@@ -464,7 +510,7 @@ class RecorderSort(Recorder):
             raise ve.AnswerBlankError
         self._qdManip.registerSort(qdm.subGenreId, qdm.examGenreId,
             qdm.difficulty_min, qdm.difficulty_max, question, answer,
-            comment, stable, qdm.seriesId, pictureId)
+            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId)
 
 
     def search(self):
@@ -527,8 +573,8 @@ class RecorderPanel(Recorder):
         return outerFrame
 
 
-    def record(self, comment, stable, pictureId):
-        qdm = QuizDataManager
+    def record(self, qdm):
+        qdm = self._qdManager
         question = self._questionFrame.question
         if not question:
             raise ve.QuestionBlankError
@@ -555,8 +601,9 @@ class RecorderPanel(Recorder):
         answerStr = '\n'.join(answerList)
 
         self._qdManip.registerPanel(qdm.subGenreId, qdm.examGenreId,
-            qdm.difficulty_min, qdm.difficulty_max, question, answerStr, panel,
-            comment, stable, qdm.seriesId, pictureId)
+            qdm.difficulty_min, qdm.difficulty_max,
+            question, answerStr, panel,
+            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId)
 
 
     def search(self):
@@ -629,8 +676,8 @@ class RecorderSlot(Recorder):
         return outerFrame
 
 
-    def record(self, comment, stable, pictureId):
-        qdm = QuizDataManager
+    def record(self, qdm):
+        qdm = self._qdManager
         question = self._questionFrame.question
         if not question:
             raise ve.QuestionBlankError
@@ -644,7 +691,8 @@ class RecorderSlot(Recorder):
             raise ve.SlotStrLenError
         self._qdManip.registerSlot(qdm.subGenreId, qdm.examGenreId,
             qdm.difficulty_min, qdm.difficulty_max, question, answer,
-            dummy1, dummy2, dummy3, comment, stable, qdm.seriesId, pictureId)
+            dummy1, dummy2, dummy3,
+            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId)
 
 
     def search(self):
@@ -717,8 +765,8 @@ class RecorderTyping(Recorder):
         return outerFrame
 
 
-    def record(self, comment, stable, pictureId):
-        qdm = QuizDataManager
+    def record(self, qdm):
+        qdm = self._qdManager
         question = self._questionFrame.question
         if not question:
             raise ve.QuestionBlankError
@@ -726,7 +774,7 @@ class RecorderTyping(Recorder):
         (typingtype, answer) = self.getTypingTypeAndAnswer(rowAnswerList)
         self._qdManip.registerTyping(qdm.subGenreId, qdm.examGenreId,
             qdm.difficulty_min, qdm.difficulty_max, question, typingtype,
-            answer, comment, stable, qdm.seriesId, pictureId)
+            answer, qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId)
 
 
     def search(self):
@@ -792,8 +840,8 @@ class RecorderCube(Recorder):
         return outerFrame
 
 
-    def record(self, comment, stable, pictureId):
-        qdm = QuizDataManager
+    def record(self, qdm):
+        qdm = self._qdManager
         question = self._questionFrame.question
         if not question:
             raise ve.QuestionBlankError
@@ -801,7 +849,7 @@ class RecorderCube(Recorder):
         (typingtype, answer) = self.getTypingTypeAndAnswer(rowAnswerList)
         self._qdManip.registerCube(qdm.subGenreId, qdm.examGenreId,
             qdm.difficulty_min, qdm.difficulty_max, question, typingtype,
-            answer, comment, stable, qdm.seriesId, pictureId)
+            answer, qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId)
 
 
     def search(self):
@@ -862,8 +910,8 @@ class RecorderEffect(Recorder):
         return outerFrame
 
 
-    def record(self, comment, stable, pictureId):
-        qdm = QuizDataManager
+    def record(self, qdm):
+        qdm = self._qdManager
         question = self._questionFrame.question
         if not question:
             raise ve.QuestionBlankError
@@ -876,7 +924,8 @@ class RecorderEffect(Recorder):
         (typingtype, answer) = self.getTypingTypeAndAnswer(rowAnswerList)
         self._qdManip.registerEffect(qdm.subGenreId, qdm.examGenreId,
             qdm.difficulty_min, qdm.difficulty_max, question, questionEffect,
-            typingtype, answer, comment, stable, qdm.seriesId, pictureId)
+            typingtype, answer,
+            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId)
 
 
     def search(self):
@@ -962,8 +1011,8 @@ class RecorderOrder(Recorder):
         return outerFrame
 
 
-    def record(self, comment, stable, pictureId):
-        qdm = QuizDataManager
+    def record(self, qdm):
+        qdm = self._qdManager
         question = self._questionFrame.question
         if not question:
             raise ve.QuestionBlankError
@@ -973,7 +1022,8 @@ class RecorderOrder(Recorder):
         answerStr = '\n'.join(answerList)
         self._qdManip.registerOrder(qdm.subGenreId, qdm.examGenreId,
             qdm.difficulty_min, qdm.difficulty_max, question, answerStr,
-            self._multiTypeId, comment, stable, qdm.seriesId, pictureId)
+            self._multiTypeId,
+            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId)
 
 
     def search(self):
@@ -1063,8 +1113,8 @@ class RecorderConnect(Recorder):
         return outerFrame
 
 
-    def record(self, comment, stable, pictureId):
-        qdm = QuizDataManager
+    def record(self, qdm):
+        qdm = self._qdManager
         question = self._questionFrame.question
         if not question:
             raise ve.QuestionBlankError
@@ -1077,7 +1127,8 @@ class RecorderConnect(Recorder):
         self._qdManip.registerConnect(qdm.subGenreId, qdm.examGenreId,
             qdm.difficulty_min, qdm.difficulty_max, question,
             optionLeftStr, optionRightStr,
-            self._multiTypeId, comment, stable, qdm.seriesId, pictureId)
+            self._multiTypeId,
+            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId)
 
 
     def search(self):
@@ -1182,8 +1233,8 @@ class RecorderMulti(Recorder):
         return outerFrame
 
 
-    def record(self, comment, stable, pictureId):
-        qdm = QuizDataManager
+    def record(self, qdm):
+        qdm = self._qdManager
         question = self._questionFrame.question
         if not question:
             raise ve.QuestionBlankError
@@ -1196,7 +1247,8 @@ class RecorderMulti(Recorder):
         self._qdManip.registerMulti(qdm.subGenreId, qdm.examGenreId,
             qdm.difficulty_min, qdm.difficulty_max, question,
             answerStr, dummyStr,
-            self._multiTypeId, comment, stable, qdm.seriesId, pictureId)
+            self._multiTypeId,
+            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId)
 
 
     def search(self):
@@ -1304,8 +1356,8 @@ class RecorderGroup(Recorder):
         return outerFrame
 
 
-    def record(self, comment, stable, pictureId):
-        qdm = QuizDataManager
+    def record(self, qdm):
+        qdm = self._qdManager
         question = self._questionFrame.question
         if not question:
             raise ve.QuestionBlankError
@@ -1320,7 +1372,8 @@ class RecorderGroup(Recorder):
         self._qdManip.registerGroup(qdm.subGenreId, qdm.examGenreId,
             qdm.difficulty_min, qdm.difficulty_max, question,
             group1Str, group2Str, group3Str,
-            self._multiTypeId, comment, stable, qdm.seriesId, pictureId)
+            self._multiTypeId,
+            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId)
 
 
     def search(self):
@@ -1419,8 +1472,8 @@ class RecorderFirstcome(Recorder):
         return outerFrame
 
 
-    def record(self, comment, stable, pictureId):
-        qdm = QuizDataManager
+    def record(self, qdm):
+        qdm = self._qdManager
         question = self._questionFrame.question
         if not question:
             raise ve.QuestionBlankError
@@ -1433,7 +1486,8 @@ class RecorderFirstcome(Recorder):
         self._qdManip.registerFirstcome(qdm.subGenreId, qdm.examGenreId,
             qdm.difficulty_min, qdm.difficulty_max, question,
             answerStr, dummyStr,
-            self._multiTypeId, comment, stable, qdm.seriesId, pictureId)
+            self._multiTypeId,
+            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId)
 
 
     def search(self):
@@ -1532,15 +1586,16 @@ class RecorderImagetouch(Recorder):
         return outerFrame
 
 
-    def record(self, comment, stable, pictureId):
-        qdm = QuizDataManager
+    def record(self, qdm):
+        qdm = self._qdManager
         question = self._questionFrame.question
         if not question:
             raise ve.QuestionBlankError
         pictureAnswerId = self._pictureAnswerId
         self._qdManip.registerImagetouch(qdm.subGenreId, qdm.examGenreId,
             qdm.difficulty_min, qdm.difficulty_max, question,
-            comment, stable, qdm.seriesId, pictureId, pictureAnswerId)
+            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId,
+            pictureAnswerId)
 
 
     def search(self):

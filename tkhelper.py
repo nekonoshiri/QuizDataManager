@@ -208,3 +208,14 @@ class ComboboxIdd(ttk.Combobox):
         else:
             return sl[0]
 
+
+    def select(self, selectId, throw = False):
+        try:
+            ix = findIndex(lambda item: item[0] == selectId,
+                self._iddList, True)
+            self.current(ix)
+            self.event_generate('<<ComboboxSelect>>')
+        except ValueError:
+            if throw: raise KeyError("selectId '%s' not found" % selectId)
+
+

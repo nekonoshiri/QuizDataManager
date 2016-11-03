@@ -1,5 +1,4 @@
 from copy import deepcopy
-from functools import reduce
 import sqlite3
 
 from util import find
@@ -27,24 +26,33 @@ class DBManip(object):
 
     # ex) db.select(['id', 'name'], 'mytable')
     def select(self, columns, table, cond = '', params = []):
-        columnstr = self.__reduceItr(columns)
-        return self.execute( 'select %s from %s ' % (columnstr, table) + cond, params)
+        columnstr = ','.join(columns)
+        return self.execute(
+            'select {} from {} {}'.format(columnstr, table, cond),
+            params
+        )
 
 
     # ex) db.insert('mytable', ['id', 'name'], [1, 'mimi'])
     def insert(self, table, columns, values):
-        columnstr = self.__reduceItr(columns)
+        columnstr = ','.join(columns)
         valuestrQ = (', ?' * len (values))[1:]
         return self.execute(
-            'insert into %s (%s) values (%s)' % (table, columnstr, valuestrQ),
+            'insert into {} ({}) values ({})'.format(table, columnstr, valuestrQ),
             values
         )
 
 
-    # ['a', 'b', 'c'] -> "a, b, c"
-    @staticmethod
-    def __reduceItr(itr):
-        return reduce(lambda x, y: "%s, %s" % (x, y), itr)
+    # ex) db.update('mytable', ['id', 'name'], [1, 'mimi'])
+    def update(self, table, columns, values, cond, params = []):
+        setStr = ','.join(
+            ['{} = ?'.format(col) for col in columns]
+        )
+        return self.execute(
+            'update {} set {} {}'.format(table, setStr, cond),
+            values + params
+        )
+
 
 
 class QuestionDataDBManip(DBManip):
@@ -95,7 +103,7 @@ class QuestionDataDBManip(DBManip):
 
 
     def getGenreIdBySubGenreId(self, subGenreId, throw = False):
-        return find(lambda x: x[1] == subGenreId, self.__subGenreList, throw)
+        return find(lambda x: x[0] == subGenreId, self.__subGenreList, throw)[2]
 
 
     def getGenreNameById(self, genreId):
@@ -120,19 +128,6 @@ class QuestionDataDBManip(DBManip):
 
     def getSeriesNameById(self, seriesId):
         return [s for (i, s) in self.__seriesList if i == seriesId][0]
-
-
-    def registerOX(self, subGenreId: int, examGenreId: int,
-            difficulty_min: int, difficulty_max: int, question: str,
-            answer: bool, comment: str, stable: bool, seriesId: int,
-            pictureId: int):
-        self.insert(
-            'quiz_ox',
-            ['subgenre', 'examgenre', 'difficulty_min', 'difficulty_max',
-             'question', 'answer', 'comment', 'stable', 'series', 'picture_id'],
-            [subGenreId, examGenreId, difficulty_min, difficulty_max,
-             question, answer, comment, stable, seriesId, pictureId]
-        )
 
 
     def registerFour(self, subGenreId: int, examGenreId: int,
