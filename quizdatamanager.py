@@ -330,7 +330,24 @@ class QuizDataManager(tk.Frame):
 
 
     def __createBottomButton(self):
+        def clear():
+            if self.recordMode == RecordMode.Insert:
+                if not messagebox.askokcancel('askokcancel',
+                        '入力をクリアする？'):
+                    return
+            else:
+                if not messagebox.askokcancel('askokcancel',
+                        '編集をキャンセルする？'):
+                    return
+            self.__cleanUpAll()
+            self.setRecordMode(RecordMode.Insert)
+
         bottomFrame = tk.Frame(self)
+        clearButton = tk.Button(bottomFrame, text = 'クリア')
+        clearButton['command'] = clear
+        clearButton.pack(side = tk.LEFT)
+        paddingFrame = tk.Frame(bottomFrame, width = 10)
+        paddingFrame.pack(side = tk.LEFT)
         searchButton = tk.Button(bottomFrame, text = '問題検索')
         searchButton['command'] = self.__createSearchWindow
         searchButton.pack(side = tk.LEFT)
