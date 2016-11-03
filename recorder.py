@@ -104,9 +104,9 @@ class Recorder(object, metaclass = ABCMeta):
     # for Typing, Cube, Effect
     def getTypingTypeAndAnswer(self, rowAnswerList):
         def getTypingType(answer):
-            if MojiUtil.isHiragana(answer):
+            if MojiUtil.isHiragana(answer, onbiki = True):
                 return TypingType.Hiragana
-            elif MojiUtil.isZenkakuKatakana(answer):
+            elif MojiUtil.isZenkakuKatakana(answer, onbiki = True):
                 return TypingType.Katakana
             elif answer.encode('utf-8').isalnum():
                 return TypingType.Eisuuji
