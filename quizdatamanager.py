@@ -403,19 +403,40 @@ class SearchWindow(tk.Toplevel):
 
 
     def __createMain(self):
+        yscroll = tk.Scrollbar(self)
+        yscroll.grid(row = 0, column = 1, sticky = tk.N + tk.S)
+        xscroll = tk.Scrollbar(self, orient = tk.HORIZONTAL)
+        xscroll.grid(row = 1, column = 0, sticky = tk.E + tk.W)
+        canvas = tk.Canvas(self, width = 1000,
+            yscrollcommand = yscroll.set,
+            xscrollcommand = xscroll.set)
+        canvas.grid(row = 0, column = 0,
+            sticky = tk.N + tk.S + tk.E + tk.W)
+        yscroll.config(command = canvas.yview)
+        xscroll.config(command = canvas.xview)
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+        innerFrame = tk.Frame(canvas)
+        innerFrame.rowconfigure(1, weight = 1)
+        innerFrame.columnconfigure(1, weight = 1)
+
         searchResult = self.__recorder.search()
         for (rowIx, rowItem) in enumerate(searchResult):
             for (columnIx, columnItem) in enumerate(rowItem):
-                l = tk.Label(self, text = columnItem, relief = tk.RIDGE,
+                l = tk.Label(innerFrame, text = columnItem, relief = tk.RIDGE,
                     justify = tk.LEFT, wraplength = 150)
-                l.grid(row = rowIx, column = columnIx,
+                l.grid(row = rowIx, column = columnIx + 1,
                     sticky = tk.W + tk.E + tk.N + tk.S)
             if rowIx > 0:
                 quizId = searchResult[rowIx][0]
-                editButton = tk.Button(self, text = '編集',
+                editButton = tk.Button(innerFrame, text = '編集',
                     command = self.__onEditButtonPush(quizId))
-                editButton.grid(row = rowIx, column = columnIx + 1,
+                editButton.grid(row = rowIx, column = 0,
                     sticky = tk.W + tk.E + tk.N + tk.S)
+
+        canvas.create_window(0, 0, anchor = tk.NW, window = innerFrame)
+        innerFrame.update_idletasks()
+        canvas.config(scrollregion=canvas.bbox("all"))
 
 
     def __onEditButtonPush(self, quizId):
