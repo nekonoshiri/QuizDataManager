@@ -203,7 +203,8 @@ class QuizDataManager(tk.Frame):
             self.__subGenreBox.iddList = self.__qdManip.getSubGenreListOnGenre(
                 self.__genreId)
             genreShowLabel['text'] = genreStr
-            self.subGenreId = None
+            self.__subGenreId = None
+            subGenreShowLabel['text'] = ''
 
         def onSubGenreBoxSelect(evt):
             (self.__subGenreId, subGenreStr) = self.__subGenreBox.selectedIdd
