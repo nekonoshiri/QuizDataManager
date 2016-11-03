@@ -236,7 +236,7 @@ class RecorderOX(Recorder):
 
     def search(self):
         question = self._questionFrame.question
-        questionHead = question[:4]
+        questionHead = question[:6]
         header = [(
             'ID', 'ジャンル', 'サブジャンル', '検定ジャンル',
             '☆下限', '☆上限',
@@ -342,7 +342,7 @@ class RecorderFour(Recorder):
 
     def search(self):
         question = self._questionFrame.question
-        questionHead = question[:4]
+        questionHead = question[:6]
         answer = self._answerEF.getEntryText()
         dummy1 = self._dummy1EF.getEntryText()
         dummy2 = self._dummy2EF.getEntryText()
@@ -648,7 +648,7 @@ class RecorderSort(Recorder):
 
     def search(self):
         question = self._questionFrame.question
-        questionHead = question[:4]
+        questionHead = question[:6]
         answer = self._answerEF.getEntryText()
 
         condList = []
@@ -775,7 +775,7 @@ class RecorderPanel(Recorder):
 
     def search(self):
         question = self._questionFrame.question
-        questionHead = question[:4]
+        questionHead = question[:6]
         answerList = self._answerFrame.answer
 
         condList = []
@@ -900,7 +900,7 @@ class RecorderSlot(Recorder):
 
     def search(self):
         question = self._questionFrame.question
-        questionHead = question[:4]
+        questionHead = question[:6]
         answer = self._answerEF.getEntryText()
         dummy1 = self._dummy1EF.getEntryText()
         dummy2 = self._dummy2EF.getEntryText()
@@ -1016,7 +1016,7 @@ class RecorderTyping(Recorder):
 
     def search(self):
         question = self._questionFrame.question
-        questionHead = question[:4]
+        questionHead = question[:6]
         rowAnswerList = self._answerFrame.answer
         answerList = [str.upper(MojiUtil.toHankaku(ans)) for ans in rowAnswerList]
 
@@ -1125,7 +1125,7 @@ class RecorderCube(Recorder):
 
     def search(self):
         question = self._questionFrame.question
-        questionHead = question[:4]
+        questionHead = question[:6]
         rowAnswer = self._answerEF.getEntryText()
         answer = str.upper(MojiUtil.toHankaku(rowAnswer))
 
@@ -1235,7 +1235,7 @@ class RecorderEffect(Recorder):
 
     def search(self):
         question = self._questionFrame.question
-        questionHead = question[:4]
+        questionHead = question[:6]
         questionEffect = self._questionEF.getEntryText()
         rowAnswerList = self._answerFrame.answer
         answerList = [str.upper(MojiUtil.toHankaku(ans)) for ans in rowAnswerList]
@@ -1367,7 +1367,7 @@ class RecorderOrder(Recorder):
 
     def search(self):
         question = self._questionFrame.question
-        questionHead = question[:4]
+        questionHead = question[:6]
         answerList = self._answerFrame.answer
         condList = []
         if question:
@@ -1506,7 +1506,7 @@ class RecorderConnect(Recorder):
 
     def search(self):
         question = self._questionFrame.question
-        questionHead = question[:4]
+        questionHead = question[:6]
         optionLeftList = self._optionLeftFrame.answer
         optionRightList = self._optionRightFrame.answer
         condList = []
@@ -1660,7 +1660,7 @@ class RecorderMulti(Recorder):
 
     def search(self):
         question = self._questionFrame.question
-        questionHead = question[:4]
+        questionHead = question[:6]
         answerList = self._answerFrame.answer
         dummyList = self._dummyFrame.answer
         condList = []
@@ -1820,7 +1820,7 @@ class RecorderGroup(Recorder):
 
     def search(self):
         question = self._questionFrame.question
-        questionHead = question[:4]
+        questionHead = question[:6]
         group1List = self._group1Frame.answer
         group2List = self._group2Frame.answer
         group3List = self._group3Frame.answer
@@ -1968,7 +1968,7 @@ class RecorderFirstcome(Recorder):
 
     def search(self):
         question = self._questionFrame.question
-        questionHead = question[:4]
+        questionHead = question[:6]
         answerList = self._answerFrame.answer
         dummyList = self._dummyFrame.answer
         condList = []
@@ -2109,7 +2109,7 @@ class RecorderImagetouch(Recorder):
 
     def search(self):
         question = self._questionFrame.question
-        questionHead = question[:4]
+        questionHead = question[:6]
 
         condList = []
         if question:
