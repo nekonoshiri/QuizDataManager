@@ -165,7 +165,7 @@ class QuizDataManager(tk.Frame):
         self.__difficulty_min = 1
         self.__difficulty_max = 5
         self.__stableVar = tk.IntVar()
-        self.__subGenreFixVar = tk.BooleanVar(value = True)
+        self.__subGenreFixVar = tk.BooleanVar(value = False)
         self.stable = StableType.Undefined
         self.__searchWindow = None
 
