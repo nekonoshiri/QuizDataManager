@@ -259,7 +259,7 @@ class RecorderOX(Recorder):
                 '{}.id'.format(self.tableName),
                 'genre.genre', 'subgenre.subgenre', 'examgenre.examgenre',
                 'difficulty_min', 'difficulty_max', 'question',
-                "replace(replace(answer, 1, 'True'), 0, 'False')",
+                "replace(replace(answer, 1, '○'), 0, '×')",
                 'comment', 'stable.stable', 'series.series', 'picture_id'
             ],
             "where question like '{}%'".format(questionHead)
