@@ -17,22 +17,6 @@ class RecordMode(Enum):
 
 
 class QuizDataManager(tk.Frame):
-    # difficulty_min = 1
-    # difficulty_max = 5
-
-
-# Instance Variables
-# __qdManip, __master, __stableVar, __searchWindow :: __init__
-# __genreId, __subGenreId, __examGenreId, __seriesId,
-# __difficulty_min, __difficulty_max :: __init__
-# __recorderList :: __makeRecorderList
-# __genreBox, __subGenreBox, __examGenreBox, __seriesBox
-#     :: __createGenreSeriesFrame
-# __mainNbook :: __createMainNotebook
-# __pictureIdEF, __commentText :: __createSupplementalFrame
-# __registerButton :: __createBottomButton
-
-
     @property
     def recordMode(self):
         return self.__recordMode
@@ -164,8 +148,7 @@ class QuizDataManager(tk.Frame):
         self.__stableVar.set(isStable)
 
 
-    def __init__(self, master, qdManip):
-        super().__init__(master)
+    def _member(self, master, qdManip):
         self.__qdManip = qdManip
         self.__master = master
         self.__genreId = None
@@ -174,9 +157,20 @@ class QuizDataManager(tk.Frame):
         self.__seriesId = None
         self.__difficulty_min = 1
         self.__difficulty_max = 5
-        self.__stableVar = tk.BooleanVar()
-        self.stable = False
+        self.__stableVar = tk.BooleanVar(value = False)
         self.__searchWindow = None
+
+# other members
+# __recorderList :: __makeRecorderList
+# __genreBox, __subGenreBox, __examGenreBox, __seriesBox
+#     :: __createGenreSeriesFrame
+# __mainNbook :: __createMainNotebook
+# __pictureIdEF, __commentText :: __createSupplementalFrame
+# __registerButton :: __createBottomButton
+
+    def __init__(self, master, qdManip):
+        super().__init__(master)
+        self._member(master, qdManip)
         self.__makeRecorderList()
         self.__createWidgets()
         self.setRecordMode(RecordMode.Insert)
