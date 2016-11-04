@@ -165,6 +165,7 @@ class QuizDataManager(tk.Frame):
         self.__difficulty_min = 1
         self.__difficulty_max = 5
         self.__stableVar = tk.IntVar()
+        self.__subGenreFixVar = tk.BooleanVar(value = True)
         self.stable = StableType.Undefined
         self.__searchWindow = None
 
@@ -223,7 +224,7 @@ class QuizDataManager(tk.Frame):
         outerFrame = tk.Frame(self)
 
         genreFrame = tk.LabelFrame(outerFrame, text = 'ジャンル')
-        genreFrame.pack(side = tk.LEFT)
+        genreFrame.pack(side = tk.LEFT, anchor = tk.N)
         self.__genreBox = ListboxIdd(genreFrame)
         self.__genreBox.iddList = self.__qdManip.getGenreList()
         self.__genreBox.onSelect = onGenreBoxSelect
@@ -232,15 +233,18 @@ class QuizDataManager(tk.Frame):
         genreShowLabel.pack()
 
         subGenreFrame = tk.LabelFrame(outerFrame, text = 'サブジャンル')
-        subGenreFrame.pack(side = tk.LEFT)
+        subGenreFrame.pack(side = tk.LEFT, anchor = tk.N)
         self.__subGenreBox = ListboxIdd(subGenreFrame)
         self.__subGenreBox.onSelect = onSubGenreBoxSelect
         self.__subGenreBox.pack()
         subGenreShowLabel = tk.Label(subGenreFrame, bg = 'LightSkyBlue')
         subGenreShowLabel.pack()
+        subGenreFixCB = tk.Checkbutton(subGenreFrame, text = '固定',
+            variable = self.__subGenreFixVar)
+        subGenreFixCB.pack()
 
         examGenreFrame = tk.LabelFrame(outerFrame, text = '検定ジャンル')
-        examGenreFrame.pack(side = tk.LEFT)
+        examGenreFrame.pack(side = tk.LEFT, anchor = tk.N)
         examYScroll = tk.Scrollbar(examGenreFrame, orient = tk.VERTICAL)
         examYScroll.pack(side = tk.RIGHT, fill = tk.Y)
         self.__examGenreBox = ListboxIdd(examGenreFrame)
@@ -253,7 +257,7 @@ class QuizDataManager(tk.Frame):
         examGenreShowLabel.pack()
 
         seriesFrame = tk.LabelFrame(outerFrame, text = '回収シリーズ')
-        seriesFrame.pack(side = tk.LEFT)
+        seriesFrame.pack(side = tk.LEFT, anchor = tk.N)
         seriesYScroll = tk.Scrollbar(seriesFrame, orient = tk.VERTICAL)
         seriesYScroll.pack(side = tk.RIGHT, fill = tk.Y)
         self.__seriesBox = ListboxIdd(seriesFrame)
@@ -411,6 +415,8 @@ class QuizDataManager(tk.Frame):
         self.pictureId = None
         self.comment = ''
         self.stable = StableType.Undefined
+        if not self.__subGenreFixVar.get():
+            self.__genreBox.select(self.genreId)
         for recorder in self.__recorderList:
             recorder.cleanUp()
 
