@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, IntEnum
 from sqlite3 import IntegrityError
 import tkinter as tk
 import tkinter.ttk as ttk
@@ -13,6 +13,13 @@ import validationException as ve
 class RecordMode(Enum):
     Insert = 0
     Update = 1
+
+
+
+class StableType(IntEnum):
+    Undefined = -1
+    Unstable = 0
+    Stable = 1
 
 
 
@@ -140,12 +147,12 @@ class QuizDataManager(tk.Frame):
 
     @property
     def stable(self):
-        return self.__stableVar.get()
+        return int(self.__stableVar.get())
 
 
     @stable.setter
-    def stable(self, isStable):
-        self.__stableVar.set(isStable)
+    def stable(self, stableType):
+        self.__stableVar.set(int(stableType))
 
 
     def _member(self, master, qdManip):
@@ -157,7 +164,8 @@ class QuizDataManager(tk.Frame):
         self.__seriesId = None
         self.__difficulty_min = 1
         self.__difficulty_max = 5
-        self.__stableVar = tk.BooleanVar(value = False)
+        self.__stableVar = tk.IntVar()
+        self.stable = StableType.Undefined
         self.__searchWindow = None
 
 # other members
@@ -313,11 +321,11 @@ class QuizDataManager(tk.Frame):
         stableFrame.pack()
         tk.Radiobutton(
             stableFrame, text = '安定',
-            variable = self.__stableVar, value = True
+            variable = self.__stableVar, value = int(StableType.Stable)
         ).pack(side = tk.LEFT)
         tk.Radiobutton(
             stableFrame, text = '不安定',
-            variable = self.__stableVar, value = False
+            variable = self.__stableVar, value = int(StableType.Unstable)
         ).pack(side = tk.LEFT)
 
         outerFrame.pack()
@@ -371,7 +379,7 @@ class QuizDataManager(tk.Frame):
     def __record(self):
         recorder = self.__getCurrentRecorder()
         try:
-            self.__validationGenreIdAndSeriesId()
+            self.__validationCommon()
             recorder.record(self.__quizId)
             self.__qdManip.save()
             if self.recordMode == RecordMode.Insert:
@@ -386,7 +394,7 @@ class QuizDataManager(tk.Frame):
                 '既に同じクイズが登録されているよ！')
 
 
-    def __validationGenreIdAndSeriesId(self):
+    def __validationCommon(self):
         if self.genreId is None:
             raise ve.GenreNoneError
         if self.subGenreId is None:
@@ -395,12 +403,14 @@ class QuizDataManager(tk.Frame):
             raise ve.ExamGenreNoneError
         if self.seriesId is None:
             raise ve.SeriesIdNoneError
+        if self.stable == StableType.Undefined:
+            raise ve.StableTypeUndefinedError
 
 
     def __cleanUpAll(self):
         self.pictureId = None
         self.comment = ''
-        self.stable = False
+        self.stable = StableType.Undefined
         for recorder in self.__recorderList:
             recorder.cleanUp()
 
