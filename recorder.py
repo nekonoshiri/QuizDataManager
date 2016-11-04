@@ -152,10 +152,16 @@ class Recorder(object, metaclass = ABCMeta):
 
 @recorder
 class RecorderOX(Recorder):
+    class Answer(IntEnum):
+        Undefined = -1
+        AnswerFalse = 0
+        AnswerTrue = 1
+
+
     def __init__(self, qdManip, qdManager):
         super().__init__(qdManip, qdManager)
-        self._answerVar = tk.BooleanVar()
-        self._answer = True
+        self._answerVar = tk.IntVar()
+        self._answer = self.Answer.Undefined
 
 
     @property
@@ -170,12 +176,12 @@ class RecorderOX(Recorder):
 
     @property
     def _answer(self):
-        return self._answerVar.get()
+        return int(self._answerVar.get())
 
 
     @_answer.setter
-    def _answer(self, answer: bool):
-        self._answerVar.set(answer)
+    def _answer(self, answer):
+        self._answerVar.set(int(answer))
 
 
     def recordationFrame(self):
@@ -186,10 +192,12 @@ class RecorderOX(Recorder):
         answerFrame = tk.LabelFrame(outerFrame, text = '答え')
         answerFrame.pack()
         trueRb = tk.Radiobutton(answerFrame, text = '○',
-            variable = self._answerVar, value = True)
+            variable = self._answerVar,
+            value = int(self.Answer.AnswerTrue))
         trueRb.pack(side = tk.LEFT)
         falseRb = tk.Radiobutton(answerFrame, text = '×',
-            variable = self._answerVar, value = False)
+            variable = self._answerVar,
+            value = int(self.Answer.AnswerFalse))
         falseRb.pack(side = tk.LEFT)
 
         return outerFrame
@@ -200,6 +208,9 @@ class RecorderOX(Recorder):
         question = self._questionFrame.question
         if not question:
             raise ve.QuestionBlankError
+        answer = self._answer
+        if answer == self.Answer.Undefined:
+            raise ve.AnswerBlankError
         columns = [
             'subgenre', 'examgenre',
             'difficulty_min', 'difficulty_max',
@@ -209,7 +220,7 @@ class RecorderOX(Recorder):
         values = [
             qdm.subGenreId, qdm.examGenreId,
             qdm.difficulty_min, qdm.difficulty_max,
-            question, self._answer,
+            question, answer,
             qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
         ]
         if qdm.recordMode == RecordMode.Insert:
@@ -258,7 +269,7 @@ class RecorderOX(Recorder):
 
     def cleanUp(self):
         self._questionFrame.question = ''
-        self._answer = True
+        self._answer = self.Answer.Undefined
 
 
 
