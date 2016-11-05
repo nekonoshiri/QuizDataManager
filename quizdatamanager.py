@@ -6,7 +6,7 @@ import tkinter.ttk as ttk
 from tkinter import messagebox
 from tkinter.scrolledtext import ScrolledText
 
-from tkcommon import EntryFrame
+from tkcommon import QuestionFrame, EntryFrame
 from tkhelper import ListboxIdd, ComboboxIdd
 import validationException as ve
 
@@ -96,6 +96,16 @@ class QuizDataManager(tk.Frame):
 
 
     @property
+    def question(self):
+        return self.__questionFrame.question
+
+
+    @question.setter
+    def question(self, question):
+        self.__questionFrame.question = question
+
+
+    @property
     def difficulty_min(self):
         return self.__difficulty_min
 
@@ -175,6 +185,7 @@ class QuizDataManager(tk.Frame):
 # __recorderList :: __makeRecorderList
 # __genreBox, __subGenreBox, __examGenreBox, __seriesBox
 #     :: __createGenreSeriesFrame
+# __questionFrame :: __createQuestionFrame
 # __mainNbook :: __createMainNotebook
 # __pictureIdEF, __commentText :: __createSupplementalFrame
 # __registerButton :: __createBottomButton
@@ -197,6 +208,7 @@ class QuizDataManager(tk.Frame):
 
     def __createWidgets(self):
         self.__createGenreSeriesFrame()
+        self.__createQuestionFrame()
         self.__createMainNotebook()
         self.__createSupplementalFrame()
         self.__createBottomButton()
@@ -272,6 +284,11 @@ class QuizDataManager(tk.Frame):
         seriesShowLabel.pack()
 
         outerFrame.pack()
+
+
+    def __createQuestionFrame(self):
+        self.__questionFrame = QuestionFrame(self)
+        self.__questionFrame.pack()
 
 
     def __createMainNotebook(self):
@@ -409,11 +426,14 @@ class QuizDataManager(tk.Frame):
             raise ve.ExamGenreNoneError
         if self.seriesId is None:
             raise ve.SeriesIdNoneError
+        if not self.question:
+            raise ve.QuestionBlankError
         if self.stable == StableType.Undefined:
             raise ve.StableTypeUndefinedError
 
 
     def __cleanUpAll(self):
+        self.__questionFrame.question = ''
         self.pictureId = None
         self.comment = ''
         self.stable = StableType.Undefined

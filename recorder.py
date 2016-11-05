@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 from enum import IntEnum
 import tkinter as tk
 
-from tkcommon import QuestionFrame, AnswerTextFrame, EntryFrame
+from tkcommon import AnswerTextFrame, EntryFrame
 from tkhelper import ListboxIdd
 from mojiutil import MojiUtil
 from quizdatamanager import RecordMode
@@ -85,13 +85,14 @@ class Recorder(object, metaclass = ABCMeta):
 
 
     def editCommon(self, quizId, subGenreId, examGenreId,
-            difficulty_min, difficulty_max,
+            difficulty_min, difficulty_max, question,
             comment, stable, seriesId, pictureId):
         qdm = self._qdManager
         genreId = self._qdManip.getGenreIdBySubGenreId(subGenreId)
         qdm.genreId = genreId
         qdm.subGenreId = subGenreId
         qdm.examGenreId = examGenreId
+        qdm.question = question
         qdm.difficulty_min = difficulty_min
         qdm.difficulty_max = difficulty_max
         qdm.comment = comment
@@ -186,9 +187,6 @@ class RecorderOX(Recorder):
 
     def recordationFrame(self):
         outerFrame = tk.Frame()
-
-        self._questionFrame = QuestionFrame(outerFrame)
-        self._questionFrame.pack()
         answerFrame = tk.LabelFrame(outerFrame, text = '答え')
         answerFrame.pack()
         trueRb = tk.Radiobutton(answerFrame, text = '○',
@@ -199,15 +197,11 @@ class RecorderOX(Recorder):
             variable = self._answerVar,
             value = int(self.Answer.AnswerFalse))
         falseRb.pack(side = tk.LEFT)
-
         return outerFrame
 
 
     def record(self, quizId = None):
         qdm = self._qdManager
-        question = self._questionFrame.question
-        if not question:
-            raise ve.QuestionBlankError
         answer = self._answer
         if answer == self.Answer.Undefined:
             raise ve.AnswerBlankError
@@ -220,7 +214,7 @@ class RecorderOX(Recorder):
         values = [
             qdm.subGenreId, qdm.examGenreId,
             qdm.difficulty_min, qdm.difficulty_max,
-            question, answer,
+            qdm.question, answer,
             qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
         ]
         if qdm.recordMode == RecordMode.Insert:
@@ -238,16 +232,14 @@ class RecorderOX(Recorder):
             question, answer, comment,
             stable, _, _, _, seriesId, pictureId
         ) = self.getQuizData(quizId)
-        self._questionFrame.question = question
         self._answer = answer
         self.editCommon(quizId, subGenreId, examGenreId,
-            difficulty_min, difficulty_max,
+            difficulty_min, difficulty_max, question,
             comment, stable, seriesId, pictureId)
 
 
     def search(self):
-        question = self._questionFrame.question
-        questionHead = question[:6]
+        questionHead = self._qdManager.question[:6]
         header = [(
             'ID', 'ジャンル', 'サブジャンル', '検定ジャンル',
             '☆下限', '☆上限',
@@ -268,7 +260,6 @@ class RecorderOX(Recorder):
 
 
     def cleanUp(self):
-        self._questionFrame.question = ''
         self._answer = self.Answer.Undefined
 
 
@@ -287,10 +278,6 @@ class RecorderFour(Recorder):
 
     def recordationFrame(self):
         outerFrame = tk.Frame()
-
-        self._questionFrame = QuestionFrame(outerFrame)
-        self._questionFrame.pack()
-
         self._answerEF = EntryFrame(outerFrame, text = '答え')
         self._answerEF.pack()
         self._dummy1EF = EntryFrame(outerFrame, text = 'ダミー１')
@@ -299,21 +286,17 @@ class RecorderFour(Recorder):
         self._dummy2EF.pack()
         self._dummy3EF = EntryFrame(outerFrame, text = 'ダミー３')
         self._dummy3EF.pack()
-
         return outerFrame
 
 
     def record(self, quizId = None):
         qdm = self._qdManager
-        question = self._questionFrame.question
-        if not question:
-            raise ve.QuestionBlankError
         answer = self._answerEF.getEntryText()
         dummy1 = self._dummy1EF.getEntryText()
         dummy2 = self._dummy2EF.getEntryText()
         dummy3 = self._dummy3EF.getEntryText()
-        for s in (answer, dummy1, dummy2, dummy3):
-            if not s: raise ve.AnswerBlankError
+        if not all((answer, dummy1, dummy2, dummy3)):
+            raise ve.AnswerBlankError
         columns = [
             'subgenre', 'examgenre',
             'difficulty_min', 'difficulty_max',
@@ -323,7 +306,7 @@ class RecorderFour(Recorder):
         values = [
             qdm.subGenreId, qdm.examGenreId,
             qdm.difficulty_min, qdm.difficulty_max,
-            question, answer, dummy1, dummy2, dummy3,
+            qdm.question, answer, dummy1, dummy2, dummy3,
             qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
         ]
         if qdm.recordMode == RecordMode.Insert:
@@ -341,26 +324,24 @@ class RecorderFour(Recorder):
             question, answer, dummy1, dummy2, dummy3, comment,
             stable, _, _, _, seriesId, pictureId
         ) = self.getQuizData(quizId)
-        self._questionFrame.question = question
         self._answerEF.setEntryText(answer)
         self._dummy1EF.setEntryText(dummy1)
         self._dummy1EF.setEntryText(dummy2)
         self._dummy1EF.setEntryText(dummy3)
         self.editCommon(quizId, subGenreId, examGenreId,
-            difficulty_min, difficulty_max,
+            difficulty_min, difficulty_max, question,
             comment, stable, seriesId, pictureId)
 
 
     def search(self):
-        question = self._questionFrame.question
-        questionHead = question[:6]
+        questionHead = self._qdManager.question[:6]
         answer = self._answerEF.getEntryText()
         dummy1 = self._dummy1EF.getEntryText()
         dummy2 = self._dummy2EF.getEntryText()
         dummy3 = self._dummy3EF.getEntryText()
 
         condList = []
-        if question:
+        if questionHead:
             condList.append("question like '%{}%'".format(questionHead))
         if any((answer, dummy1, dummy2, dummy3)):
             l = [
@@ -395,7 +376,6 @@ class RecorderFour(Recorder):
 
 
     def cleanUp(self):
-        self._questionFrame.question = ''
         self._answerEF.deleteEntryText()
         self._dummy1EF.deleteEntryText()
         self._dummy2EF.deleteEntryText()
@@ -421,12 +401,11 @@ class RecorderAssoc(Recorder):
             assocTypeLabel['text'] = assocTypeStr
 
         outerFrame = tk.Frame()
+        innerFrame = tk.Frame(outerFrame)
+        innerFrame.pack()
 
-        self._questionFrame = QuestionFrame(outerFrame)
-        self._questionFrame.pack()
-
-        answerFrame = tk.Frame(outerFrame)
-        answerFrame.pack(side = tk.LEFT)
+        answerFrame = tk.Frame(innerFrame)
+        answerFrame.pack(side = tk.LEFT, padx = 30)
         self._answerEF = EntryFrame(answerFrame, text = '答え')
         self._answerEF.pack()
         self._dummy1EF = EntryFrame(answerFrame, text = 'ダミー１')
@@ -436,7 +415,7 @@ class RecorderAssoc(Recorder):
         self._dummy3EF = EntryFrame(answerFrame, text = 'ダミー３')
         self._dummy3EF.pack()
 
-        bottomFrame = tk.LabelFrame(outerFrame, text = '連想タイプ')
+        bottomFrame = tk.LabelFrame(innerFrame, text = '連想タイプ')
         bottomFrame.pack(side = tk.LEFT)
         self._assocTypeBox = ListboxIdd(bottomFrame, height = 4)
         self._assocTypeBox.iddList = self._qdManip.getAssocTypeList()
@@ -453,17 +432,14 @@ class RecorderAssoc(Recorder):
 
     def record(self, quizId = None):
         qdm = self._qdManager
-        question = self._questionFrame.question
-        if not question:
-            raise ve.QuestionBlankError
-        if question.count('\n') > 3:
+        if qdm.question.count('\n') > 3:
             raise ve.AssocLengthError
         answer = self._answerEF.getEntryText()
         dummy1 = self._dummy1EF.getEntryText()
         dummy2 = self._dummy2EF.getEntryText()
         dummy3 = self._dummy3EF.getEntryText()
-        for s in (answer, dummy1, dummy2, dummy3):
-            if not s: raise ve.AnswerBlankError
+        if not all((answer, dummy1, dummy2, dummy3)):
+            raise ve.AnswerBlankError
         columns = [
             'subgenre', 'examgenre',
             'difficulty_min', 'difficulty_max',
@@ -473,7 +449,7 @@ class RecorderAssoc(Recorder):
         values = [
             qdm.subGenreId, qdm.examGenreId,
             qdm.difficulty_min, qdm.difficulty_max,
-            question, answer, dummy1, dummy2, dummy3, self._assocTypeId,
+            qdm.question, answer, dummy1, dummy2, dummy3, self._assocTypeId,
             qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
         ]
         if qdm.recordMode == RecordMode.Insert:
@@ -491,19 +467,18 @@ class RecorderAssoc(Recorder):
             question, answer, dummy1, dummy2, dummy3, assoctype,
             comment, stable, _, _, _, seriesId, pictureId
         ) = self.getQuizData(quizId)
-        self._questionFrame.question = question
         self._answerEF.setEntryText(answer)
         self._dummy1EF.setEntryText(dummy1)
         self._dummy2EF.setEntryText(dummy2)
         self._dummy3EF.setEntryText(dummy3)
         self._assocTypeBox.select(assoctype)
         self.editCommon(quizId, subGenreId, examGenreId,
-            difficulty_min, difficulty_max,
+            difficulty_min, difficulty_max, question,
             comment, stable, seriesId, pictureId)
 
 
     def search(self):
-        question = self._questionFrame.question
+        question = self._qdManager.question
         answer = self._answerEF.getEntryText()
         dummy1 = self._dummy1EF.getEntryText()
         dummy2 = self._dummy2EF.getEntryText()
@@ -550,7 +525,6 @@ class RecorderAssoc(Recorder):
 
 
     def cleanUp(self):
-        self._questionFrame.question = ''
         self._answerEF.deleteEntryText()
         self._dummy1EF.deleteEntryText()
         self._dummy2EF.deleteEntryText()
@@ -573,21 +547,13 @@ class RecorderSort(Recorder):
 
     def recordationFrame(self):
         outerFrame = tk.Frame()
-
-        self._questionFrame = QuestionFrame(outerFrame)
-        self._questionFrame.pack()
-
         self._answerEF = EntryFrame(outerFrame, text = '答え')
         self._answerEF.pack()
-
         return outerFrame
 
 
     def record(self, quizId = None):
         qdm = self._qdManager
-        question = self._questionFrame.question
-        if not question:
-            raise ve.QuestionBlankError
         answer = self._answerEF.getEntryText()
         if not answer:
             raise ve.AnswerBlankError
@@ -600,7 +566,7 @@ class RecorderSort(Recorder):
         values = [
             qdm.subGenreId, qdm.examGenreId,
             qdm.difficulty_min, qdm.difficulty_max,
-            question, answer,
+            qdm.question, answer,
             qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
         ]
         if qdm.recordMode == RecordMode.Insert:
@@ -618,20 +584,18 @@ class RecorderSort(Recorder):
             question, answer, comment,
             stable, _, _, _, seriesId, pictureId
         ) = self.getQuizData(quizId)
-        self._questionFrame.question = question
         self._answerEF.setEntryText(answer)
         self.editCommon(quizId, subGenreId, examGenreId,
-            difficulty_min, difficulty_max,
+            difficulty_min, difficulty_max, question,
             comment, stable, seriesId, pictureId)
 
 
     def search(self):
-        question = self._questionFrame.question
-        questionHead = question[:6]
+        questionHead = self._qdManager.question[:6]
         answer = self._answerEF.getEntryText()
 
         condList = []
-        if question:
+        if questionHead:
             condList.append("question like '%{}%'".format(questionHead))
         if answer:
             condList.append("answer = '{}'".format(answer))
@@ -657,7 +621,6 @@ class RecorderSort(Recorder):
 
 
     def cleanUp(self):
-        self._questionFrame.question = ''
         self._answerEF.deleteEntryText()
 
 
@@ -676,26 +639,16 @@ class RecorderPanel(Recorder):
 
     def recordationFrame(self):
         outerFrame = tk.Frame()
-
-        self._questionFrame = QuestionFrame(outerFrame)
-        self._questionFrame.pack()
-
         self._answerFrame = AnswerTextFrame(outerFrame)
         self._answerFrame.pack()
-
         self._panelEF = EntryFrame(outerFrame,
             text = 'パネル（8枚または10枚）')
         self._panelEF.pack()
-
         return outerFrame
 
 
     def record(self, quizId = None):
         qdm = self._qdManager
-        question = self._questionFrame.question
-        if not question:
-            raise ve.QuestionBlankError
-
         answerList = self._answerFrame.answer
         if not answerList:
             raise ve.AnswerBlankError
@@ -726,7 +679,7 @@ class RecorderPanel(Recorder):
         values = [
             qdm.subGenreId, qdm.examGenreId,
             qdm.difficulty_min, qdm.difficulty_max,
-            question, answerStr, panel,
+            qdm.question, answerStr, panel,
             qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
         ]
         if qdm.recordMode == RecordMode.Insert:
@@ -744,21 +697,19 @@ class RecorderPanel(Recorder):
             question, answer, panel, comment,
             stable, _, _, _, seriesId, pictureId
         ) = self.getQuizData(quizId)
-        self._questionFrame.question = question
         self._answerFrame.answer = answer
         self._panelEF.setEntryText(panel)
         self.editCommon(quizId, subGenreId, examGenreId,
-            difficulty_min, difficulty_max,
+            difficulty_min, difficulty_max, question,
             comment, stable, seriesId, pictureId)
 
 
     def search(self):
-        question = self._questionFrame.question
-        questionHead = question[:6]
+        questionHead = self._qdManager.question[:6]
         answerList = self._answerFrame.answer
 
         condList = []
-        if question:
+        if questionHead:
             condList.append("question like '%{}%'".format(questionHead))
         if answerList:
             for answer in answerList:
@@ -791,7 +742,6 @@ class RecorderPanel(Recorder):
 
 
     def cleanUp(self):
-        self._questionFrame.question = ''
         self._answerFrame.answer = ''
         self._panelEF.deleteEntryText()
 
@@ -811,10 +761,6 @@ class RecorderSlot(Recorder):
 
     def recordationFrame(self):
         outerFrame = tk.Frame()
-
-        self._questionFrame = QuestionFrame(outerFrame)
-        self._questionFrame.pack()
-
         self._answerEF = EntryFrame(outerFrame, text = '答え')
         self._answerEF.pack()
         self._dummy1EF = EntryFrame(outerFrame, text = 'ダミー１')
@@ -823,21 +769,17 @@ class RecorderSlot(Recorder):
         self._dummy2EF.pack()
         self._dummy3EF = EntryFrame(outerFrame, text = 'ダミー３')
         self._dummy3EF.pack()
-
         return outerFrame
 
 
     def record(self, quizId = None):
         qdm = self._qdManager
-        question = self._questionFrame.question
-        if not question:
-            raise ve.QuestionBlankError
         answer = self._answerEF.getEntryText()
         dummy1 = self._dummy1EF.getEntryText()
         dummy2 = self._dummy2EF.getEntryText()
         dummy3 = self._dummy3EF.getEntryText()
-        for s in (answer, dummy1, dummy2, dummy3):
-            if not s: raise ve.AnswerBlankError
+        if not all((answer, dummy1, dummy2, dummy3)):
+            raise ve.AnswerBlankError
         if not (len(answer) == len(dummy1) == len(dummy2) == len(dummy3)):
             raise ve.SlotStrLenError
         columns = [
@@ -849,7 +791,7 @@ class RecorderSlot(Recorder):
         values = [
             qdm.subGenreId, qdm.examGenreId,
             qdm.difficulty_min, qdm.difficulty_max,
-            question, answer, dummy1, dummy2, dummy3,
+            qdm.question, answer, dummy1, dummy2, dummy3,
             qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
         ]
         if qdm.recordMode == RecordMode.Insert:
@@ -867,26 +809,24 @@ class RecorderSlot(Recorder):
             question, answer, dummy1, dummy2, dummy3,
             comment, stable, _, _, _, seriesId, pictureId
         ) = self.getQuizData(quizId)
-        self._questionFrame.question = question
         self._answerEF.setEntryText(answer)
         self._dummy1EF.setEntryText(dummy1)
         self._dummy2EF.setEntryText(dummy2)
         self._dummy3EF.setEntryText(dummy3)
         self.editCommon(quizId, subGenreId, examGenreId,
-            difficulty_min, difficulty_max,
+            difficulty_min, difficulty_max, question,
             comment, stable, seriesId, pictureId)
 
 
     def search(self):
-        question = self._questionFrame.question
-        questionHead = question[:6]
+        questionHead = self._qdManager.question[:6]
         answer = self._answerEF.getEntryText()
         dummy1 = self._dummy1EF.getEntryText()
         dummy2 = self._dummy2EF.getEntryText()
         dummy3 = self._dummy3EF.getEntryText()
 
         condList = []
-        if question:
+        if questionHead:
             condList.append("question like '%{}%'".format(questionHead))
         if any((answer, dummy1, dummy2, dummy3)):
             l = [
@@ -921,7 +861,6 @@ class RecorderSlot(Recorder):
 
 
     def cleanUp(self):
-        self._questionFrame.question = ''
         self._answerEF.deleteEntryText()
         self._dummy1EF.deleteEntryText()
         self._dummy2EF.deleteEntryText()
@@ -943,20 +882,13 @@ class RecorderTyping(Recorder):
 
     def recordationFrame(self):
         outerFrame = tk.Frame()
-
-        self._questionFrame = QuestionFrame(outerFrame)
-        self._questionFrame.pack()
         self._answerFrame = AnswerTextFrame(outerFrame)
         self._answerFrame.pack()
-
         return outerFrame
 
 
     def record(self, quizId = None):
         qdm = self._qdManager
-        question = self._questionFrame.question
-        if not question:
-            raise ve.QuestionBlankError
         rowAnswerList = self._answerFrame.answer
         (typingtype, answer) = self.getTypingTypeAndAnswer(rowAnswerList)
         columns = [
@@ -968,7 +900,7 @@ class RecorderTyping(Recorder):
         values = [
             qdm.subGenreId, qdm.examGenreId,
             qdm.difficulty_min, qdm.difficulty_max,
-            question, typingtype, answer,
+            qdm.question, typingtype, answer,
             qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
         ]
         if qdm.recordMode == RecordMode.Insert:
@@ -986,21 +918,19 @@ class RecorderTyping(Recorder):
             question, _, answer, comment,
             stable, _, _, _, seriesId, pictureId
         ) = self.getQuizData(quizId)
-        self._questionFrame.question = question
         self._answerFrame.answer = answer
         self.editCommon(quizId, subGenreId, examGenreId,
-            difficulty_min, difficulty_max,
+            difficulty_min, difficulty_max, question,
             comment, stable, seriesId, pictureId)
 
 
     def search(self):
-        question = self._questionFrame.question
-        questionHead = question[:6]
+        questionHead = self._qdManager.question[:6]
         rowAnswerList = self._answerFrame.answer
         answerList = [str.upper(MojiUtil.toHankaku(ans)) for ans in rowAnswerList]
 
         condList = []
-        if question:
+        if questionHead:
             condList.append("question like '%{}%'".format(questionHead))
         if answerList:
             for answer in answerList:
@@ -1033,7 +963,6 @@ class RecorderTyping(Recorder):
 
 
     def cleanUp(self):
-        self._questionFrame.question = ''
         self._answerFrame.answer = ''
 
 
@@ -1052,20 +981,13 @@ class RecorderCube(Recorder):
 
     def recordationFrame(self):
         outerFrame = tk.Frame()
-
-        self._questionFrame = QuestionFrame(outerFrame)
-        self._questionFrame.pack()
         self._answerEF = EntryFrame(outerFrame, text = '答え')
         self._answerEF.pack()
-
         return outerFrame
 
 
     def record(self, quizId = None):
         qdm = self._qdManager
-        question = self._questionFrame.question
-        if not question:
-            raise ve.QuestionBlankError
         rowAnswerList = [self._answerEF.getEntryText()]
         (typingtype, answer) = self.getTypingTypeAndAnswer(rowAnswerList)
         columns = [
@@ -1077,7 +999,7 @@ class RecorderCube(Recorder):
         values = [
             qdm.subGenreId, qdm.examGenreId,
             qdm.difficulty_min, qdm.difficulty_max,
-            question, typingtype, answer,
+            qdm.question, typingtype, answer,
             qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
         ]
         if qdm.recordMode == RecordMode.Insert:
@@ -1095,21 +1017,19 @@ class RecorderCube(Recorder):
             question, _, answer, comment,
             stable, _, _, _, seriesId, pictureId
         ) = self.getQuizData(quizId)
-        self._questionFrame.question = question
         self._answerEF.setEntryText(answer)
         self.editCommon(quizId, subGenreId, examGenreId,
-            difficulty_min, difficulty_max,
+            difficulty_min, difficulty_max, question,
             comment, stable, seriesId, pictureId)
 
 
     def search(self):
-        question = self._questionFrame.question
-        questionHead = question[:6]
+        questionHead = self._qdManager.question[:6]
         rowAnswer = self._answerEF.getEntryText()
         answer = str.upper(MojiUtil.toHankaku(rowAnswer))
 
         condList = []
-        if question:
+        if questionHead:
             condList.append("question like '%{}%'".format(questionHead))
         if answer:
             condList.append("answer = '{}'".format(answer))
@@ -1135,7 +1055,6 @@ class RecorderCube(Recorder):
 
 
     def cleanUp(self):
-        self._questionFrame.question = ''
         self._answerEF.deleteEntryText()
 
 
@@ -1154,27 +1073,18 @@ class RecorderEffect(Recorder):
 
     def recordationFrame(self):
         outerFrame = tk.Frame()
-
-        self._questionFrame = QuestionFrame(outerFrame)
-        self._questionFrame.pack()
         self._questionEF = EntryFrame(outerFrame, text = 'エフェクトをかける文字')
         self._questionEF.pack()
         self._answerFrame = AnswerTextFrame(outerFrame)
         self._answerFrame.pack()
-
         return outerFrame
 
 
     def record(self, quizId = None):
         qdm = self._qdManager
-        question = self._questionFrame.question
-        if not question:
-            raise ve.QuestionBlankError
         questionEffect = self._questionEF.getEntryText()
         if not questionEffect:
             raise ve.QuestionBlankError
-        if not questionEffect:
-            raise ve.AnswerBlankError
         rowAnswerList = self._answerFrame.answer
         (typingtype, answer) = self.getTypingTypeAndAnswer(rowAnswerList)
         columns = [
@@ -1186,7 +1096,7 @@ class RecorderEffect(Recorder):
         values = [
             qdm.subGenreId, qdm.examGenreId,
             qdm.difficulty_min, qdm.difficulty_max,
-            question, questionEffect, typingtype, answer,
+            qdm.question, questionEffect, typingtype, answer,
             qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
         ]
         if qdm.recordMode == RecordMode.Insert:
@@ -1204,23 +1114,21 @@ class RecorderEffect(Recorder):
             question, questionEffect, _, answer, comment,
             stable, _, _, _, seriesId, pictureId
         ) = self.getQuizData(quizId)
-        self._questionFrame.question = question
         self._questionEF.setEntryText(questionEffect)
         self._answerFrame.answer = answer
         self.editCommon(quizId, subGenreId, examGenreId,
-            difficulty_min, difficulty_max,
+            difficulty_min, difficulty_max, question,
             comment, stable, seriesId, pictureId)
 
 
     def search(self):
-        question = self._questionFrame.question
-        questionHead = question[:6]
+        questionHead = self._qdManager.question[:6]
         questionEffect = self._questionEF.getEntryText()
         rowAnswerList = self._answerFrame.answer
         answerList = [str.upper(MojiUtil.toHankaku(ans)) for ans in rowAnswerList]
 
         condList = []
-        if question:
+        if questionHead:
             condList.append("question like '%{}%'".format(questionHead))
         if questionEffect:
             condList.append("questionEffect = '{}'".format(questionEffect))
@@ -1255,7 +1163,6 @@ class RecorderEffect(Recorder):
 
 
     def cleanUp(self):
-        self._questionFrame.question = ''
         self._questionEF.deleteEntryText()
         self._answerFrame.answer = ''
 
@@ -1280,8 +1187,6 @@ class RecorderOrder(Recorder):
 
         outerFrame = tk.Frame()
 
-        self._questionFrame = QuestionFrame(outerFrame)
-        self._questionFrame.pack()
         self._answerFrame = AnswerTextFrame(outerFrame)
         self._answerFrame.pack()
 
@@ -1302,9 +1207,6 @@ class RecorderOrder(Recorder):
 
     def record(self, quizId = None):
         qdm = self._qdManager
-        question = self._questionFrame.question
-        if not question:
-            raise ve.QuestionBlankError
         answerList = self._answerFrame.answer
         if not answerList:
             raise ve.AnswerBlankError
@@ -1318,7 +1220,7 @@ class RecorderOrder(Recorder):
         values = [
             qdm.subGenreId, qdm.examGenreId,
             qdm.difficulty_min, qdm.difficulty_max,
-            question, answerStr, self._multiTypeId,
+            qdm.question, answerStr, self._multiTypeId,
             qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
         ]
         if qdm.recordMode == RecordMode.Insert:
@@ -1336,20 +1238,18 @@ class RecorderOrder(Recorder):
             question, answer, multitype, comment,
             stable, _, _, _, seriesId, pictureId
         ) = self.getQuizData(quizId)
-        self._questionFrame.question = question
         self._answerFrame.answer = answer
         self._multiTypeBox.select(multitype)
         self.editCommon(quizId, subGenreId, examGenreId,
-            difficulty_min, difficulty_max,
+            difficulty_min, difficulty_max, question,
             comment, stable, seriesId, pictureId)
 
 
     def search(self):
-        question = self._questionFrame.question
-        questionHead = question[:6]
+        questionHead = self._qdManager.question[:6]
         answerList = self._answerFrame.answer
         condList = []
-        if question:
+        if questionHead:
             condList.append("question like '%{}%'".format(questionHead))
         if answerList:
             for answer in answerList:
@@ -1383,7 +1283,6 @@ class RecorderOrder(Recorder):
 
 
     def cleanUp(self):
-        self._questionFrame.question = ''
         self._answerFrame.answer = ''
         self._multiTypeBox.select(MultiType.Unknown)
 
@@ -1408,8 +1307,6 @@ class RecorderConnect(Recorder):
 
         outerFrame = tk.Frame()
 
-        self._questionFrame = QuestionFrame(outerFrame)
-        self._questionFrame.pack()
         topFrame = tk.Frame(outerFrame)
         topFrame.pack()
         self._optionLeftFrame = AnswerTextFrame(topFrame)
@@ -1438,9 +1335,6 @@ class RecorderConnect(Recorder):
 
     def record(self, quizId = None):
         qdm = self._qdManager
-        question = self._questionFrame.question
-        if not question:
-            raise ve.QuestionBlankError
         optionLeft = self._optionLeftFrame.answer
         optionRight = self._optionRightFrame.answer
         if (not optionLeft) or (not optionRight):
@@ -1456,7 +1350,7 @@ class RecorderConnect(Recorder):
         values = [
             qdm.subGenreId, qdm.examGenreId,
             qdm.difficulty_min, qdm.difficulty_max,
-            question, optionLeftStr, optionRightStr, self._multiTypeId,
+            qdm.question, optionLeftStr, optionRightStr, self._multiTypeId,
             qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
         ]
         if qdm.recordMode == RecordMode.Insert:
@@ -1474,22 +1368,20 @@ class RecorderConnect(Recorder):
             question, option_left, option_right, multitype, comment,
             stable, _, _, _, seriesId, pictureId
         ) = self.getQuizData(quizId)
-        self._questionFrame.question = question
         self._optionLeftFrame.answer = option_left
         self._optionRightFrame.answer = option_right
         self._multiTypeBox.select(multitype)
         self.editCommon(quizId, subGenreId, examGenreId,
-            difficulty_min, difficulty_max,
+            difficulty_min, difficulty_max, question,
             comment, stable, seriesId, pictureId)
 
 
     def search(self):
-        question = self._questionFrame.question
-        questionHead = question[:6]
+        questionHead = self._qdManager.question[:6]
         optionLeftList = self._optionLeftFrame.answer
         optionRightList = self._optionRightFrame.answer
         condList = []
-        if question:
+        if questionHead:
             condList.append("question like '%{}%'".format(questionHead))
         if optionLeftList:
             for optL in optionLeftList:
@@ -1536,7 +1428,6 @@ class RecorderConnect(Recorder):
 
 
     def cleanUp(self):
-        self._questionFrame.question = ''
         self._optionLeftFrame.answer = ''
         self._optionRightFrame.answer = ''
         self._multiTypeBox.select(MultiType.Unknown)
@@ -1562,8 +1453,6 @@ class RecorderMulti(Recorder):
 
         outerFrame = tk.Frame()
 
-        self._questionFrame = QuestionFrame(outerFrame)
-        self._questionFrame.pack()
         topFrame = tk.Frame(outerFrame)
         topFrame.pack()
         self._answerFrame = AnswerTextFrame(topFrame)
@@ -1592,9 +1481,6 @@ class RecorderMulti(Recorder):
 
     def record(self, quizId = None):
         qdm = self._qdManager
-        question = self._questionFrame.question
-        if not question:
-            raise ve.QuestionBlankError
         answerList = self._answerFrame.answer
         dummyList = self._dummyFrame.answer
         if (not answerList) and (not dummyList):
@@ -1610,7 +1496,7 @@ class RecorderMulti(Recorder):
         values = [
             qdm.subGenreId, qdm.examGenreId,
             qdm.difficulty_min, qdm.difficulty_max,
-            question, answerStr, dummyStr, self._multiTypeId,
+            qdm.question, answerStr, dummyStr, self._multiTypeId,
             qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
         ]
         if qdm.recordMode == RecordMode.Insert:
@@ -1628,22 +1514,20 @@ class RecorderMulti(Recorder):
             question, answer, dummy, multitype, comment,
             stable, _, _, _, seriesId, pictureId
         ) = self.getQuizData(quizId)
-        self._questionFrame.question = question
         self._answerFrame.answer = answer
         self._dummyFrame.answer = dummy
         self._multiTypeBox.select(multitype)
         self.editCommon(quizId, subGenreId, examGenreId,
-            difficulty_min, difficulty_max,
+            difficulty_min, difficulty_max, question,
             comment, stable, seriesId, pictureId)
 
 
     def search(self):
-        question = self._questionFrame.question
-        questionHead = question[:6]
+        questionHead = self._qdManager.question[:6]
         answerList = self._answerFrame.answer
         dummyList = self._dummyFrame.answer
         condList = []
-        if question:
+        if questionHead:
             condList.append("question like '%{}%'".format(questionHead))
         if answerList:
             for answer in answerList:
@@ -1688,7 +1572,6 @@ class RecorderMulti(Recorder):
 
 
     def cleanUp(self):
-        self._questionFrame.question = ''
         self._answerFrame.answer = ''
         self._dummyFrame.answer = ''
         self._multiTypeBox.select(MultiType.Unknown)
@@ -1714,8 +1597,6 @@ class RecorderGroup(Recorder):
 
         outerFrame = tk.Frame()
 
-        self._questionFrame = QuestionFrame(outerFrame)
-        self._questionFrame.pack()
         topFrame = tk.LabelFrame(outerFrame,
             text = '各グループの一行目はグループ名（ヘッダ）')
         topFrame.pack()
@@ -1749,9 +1630,6 @@ class RecorderGroup(Recorder):
 
     def record(self, quizId = None):
         qdm = self._qdManager
-        question = self._questionFrame.question
-        if not question:
-            raise ve.QuestionBlankError
         group1List = self._group1Frame.answer
         group2List = self._group2Frame.answer
         group3List = self._group3Frame.answer
@@ -1769,7 +1647,7 @@ class RecorderGroup(Recorder):
         values = [
             qdm.subGenreId, qdm.examGenreId,
             qdm.difficulty_min, qdm.difficulty_max,
-            question, group1Str, group2Str, group3Str, self._multiTypeId,
+            qdm.question, group1Str, group2Str, group3Str, self._multiTypeId,
             qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
         ]
         if qdm.recordMode == RecordMode.Insert:
@@ -1787,24 +1665,22 @@ class RecorderGroup(Recorder):
             question, group1, group2, group3, multitype, comment,
             stable, _, _, _, seriesId, pictureId
         ) = self.getQuizData(quizId)
-        self._questionFrame.question = question
         self._group1Frame.answer = group1
         self._group2Frame.answer = group2
         self._group3Frame.answer = group3
         self._multiTypeBox.select(multitype)
         self.editCommon(quizId, subGenreId, examGenreId,
-            difficulty_min, difficulty_max,
+            difficulty_min, difficulty_max, question,
             comment, stable, seriesId, pictureId)
 
 
     def search(self):
-        question = self._questionFrame.question
-        questionHead = question[:6]
+        questionHead = self._qdManager.question[:6]
         group1List = self._group1Frame.answer
         group2List = self._group2Frame.answer
         group3List = self._group3Frame.answer
         condList = []
-        if question:
+        if questionHead:
             condList.append("question like '%{}%'".format(questionHead))
         for groupList in (group1List, group2List, group3List):
             if not groupList:
@@ -1843,7 +1719,6 @@ class RecorderGroup(Recorder):
 
 
     def cleanUp(self):
-        self._questionFrame.question = ''
         self._group1Frame.answer = ''
         self._group2Frame.answer = ''
         self._group3Frame.answer = ''
@@ -1870,8 +1745,6 @@ class RecorderFirstcome(Recorder):
 
         outerFrame = tk.Frame()
 
-        self._questionFrame = QuestionFrame(outerFrame)
-        self._questionFrame.pack()
         topFrame = tk.Frame(outerFrame)
         topFrame.pack()
         self._answerFrame = AnswerTextFrame(topFrame)
@@ -1900,9 +1773,6 @@ class RecorderFirstcome(Recorder):
 
     def record(self, quizId = None):
         qdm = self._qdManager
-        question = self._questionFrame.question
-        if not question:
-            raise ve.QuestionBlankError
         answerList = self._answerFrame.answer
         dummyList = self._dummyFrame.answer
         if (not answerList) or (not dummyList):
@@ -1918,7 +1788,7 @@ class RecorderFirstcome(Recorder):
         values = [
             qdm.subGenreId, qdm.examGenreId,
             qdm.difficulty_min, qdm.difficulty_max,
-            question, answerStr, dummyStr, self._multiTypeId,
+            qdm.question, answerStr, dummyStr, self._multiTypeId,
             qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
         ]
         if qdm.recordMode == RecordMode.Insert:
@@ -1936,22 +1806,20 @@ class RecorderFirstcome(Recorder):
             question, answer, dummy, multitype, comment,
             stable, _, _, _, seriesId, pictureId
         ) = self.getQuizData(quizId)
-        self._questionFrame.question = question
         self._answerFrame.answer = answer
         self._dummyFrame.answer = dummy
         self._multiTypeBox.select(multitype)
         self.editCommon(quizId, subGenreId, examGenreId,
-            difficulty_min, difficulty_max,
+            difficulty_min, difficulty_max, question,
             comment, stable, seriesId, pictureId)
 
 
     def search(self):
-        question = self._questionFrame.question
-        questionHead = question[:6]
+        questionHead = self._qdManager.question[:6]
         answerList = self._answerFrame.answer
         dummyList = self._dummyFrame.answer
         condList = []
-        if question:
+        if questionHead:
             condList.append("question like '%{}%'".format(questionHead))
         if answerList:
             for answer in answerList:
@@ -1996,7 +1864,6 @@ class RecorderFirstcome(Recorder):
 
 
     def cleanUp(self):
-        self._questionFrame.question = ''
         self._answerFrame.answer = ''
         self._dummyFrame.answer = ''
         self._multiTypeBox.select(MultiType.Unknown)
@@ -2036,21 +1903,13 @@ class RecorderImagetouch(Recorder):
 
     def recordationFrame(self):
         outerFrame = tk.Frame()
-
-        self._questionFrame = QuestionFrame(outerFrame)
-        self._questionFrame.pack()
-
         self._pictureAnswerIdEF = EntryFrame(outerFrame, text = '答え画像ID')
         self._pictureAnswerIdEF.pack()
-
         return outerFrame
 
 
     def record(self, quizId = None):
         qdm = self._qdManager
-        question = self._questionFrame.question
-        if not question:
-            raise ve.QuestionBlankError
         pictureAnswerId = self._pictureAnswerId
         columns = [
             'subgenre', 'examgenre',
@@ -2061,7 +1920,7 @@ class RecorderImagetouch(Recorder):
         values = [
             qdm.subGenreId, qdm.examGenreId,
             qdm.difficulty_min, qdm.difficulty_max,
-            question, qdm.comment, qdm.stable,
+            qdm.question, qdm.comment, qdm.stable,
             qdm.seriesId, qdm.pictureId, pictureAnswerId
         ]
         if qdm.recordMode == RecordMode.Insert:
@@ -2079,19 +1938,16 @@ class RecorderImagetouch(Recorder):
             question, comment,
             stable, _, _, _, seriesId, pictureId, pictureAnswerId
         ) = self.getQuizData(quizId)
-        self._questionFrame.question = question
         self._pictureAnswerId = pictureAnswerId
         self.editCommon(quizId, subGenreId, examGenreId,
-            difficulty_min, difficulty_max,
+            difficulty_min, difficulty_max, question,
             comment, stable, seriesId, pictureId)
 
 
     def search(self):
-        question = self._questionFrame.question
-        questionHead = question[:6]
-
+        questionHead = self._qdManager.question[:6]
         condList = []
-        if question:
+        if questionHead:
             condList.append("question like '%{}%'".format(questionHead))
         cond = 'where ' + ' or '.join(condList) if condList else ''
 
@@ -2115,7 +1971,7 @@ class RecorderImagetouch(Recorder):
 
 
     def cleanUp(self):
-        self._questionFrame.question = ''
+        self._pictureAnswerId = ''
 
 
 
