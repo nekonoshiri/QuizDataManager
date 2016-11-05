@@ -262,7 +262,7 @@ class RecorderOX(Recorder):
                 "replace(replace(answer, 1, '○'), 0, '×')",
                 'comment', 'stable.stable', 'series.series', 'picture_id'
             ],
-            "where question like '{}%'".format(questionHead)
+            "where question like '%{}%'".format(questionHead)
         )
         return header + result
 
@@ -361,7 +361,7 @@ class RecorderFour(Recorder):
 
         condList = []
         if question:
-            condList.append("question like '{}%'".format(questionHead))
+            condList.append("question like '%{}%'".format(questionHead))
         if any((answer, dummy1, dummy2, dummy3)):
             l = [
                 "answer = '{}'", "dummy1 = '{}'",
@@ -664,7 +664,7 @@ class RecorderSort(Recorder):
 
         condList = []
         if question:
-            condList.append("question like '{}%'".format(questionHead))
+            condList.append("question like '%{}%'".format(questionHead))
         if answer:
             condList.append("answer = '{}'".format(answer))
         cond = 'where ' + ' or '.join(condList) if condList else ''
@@ -791,7 +791,7 @@ class RecorderPanel(Recorder):
 
         condList = []
         if question:
-            condList.append("question like '{}%'".format(questionHead))
+            condList.append("question like '%{}%'".format(questionHead))
         if answerList:
             for answer in answerList:
                 condList.extend([
@@ -919,7 +919,7 @@ class RecorderSlot(Recorder):
 
         condList = []
         if question:
-            condList.append("question like '{}%'".format(questionHead))
+            condList.append("question like '%{}%'".format(questionHead))
         if any((answer, dummy1, dummy2, dummy3)):
             l = [
                 "answer = '{}'", "dummy1 = '{}'",
@@ -1033,7 +1033,7 @@ class RecorderTyping(Recorder):
 
         condList = []
         if question:
-            condList.append("question like '{}%'".format(questionHead))
+            condList.append("question like '%{}%'".format(questionHead))
         if answerList:
             for answer in answerList:
                 condList.extend([
@@ -1142,7 +1142,7 @@ class RecorderCube(Recorder):
 
         condList = []
         if question:
-            condList.append("question like '{}%'".format(questionHead))
+            condList.append("question like '%{}%'".format(questionHead))
         if answer:
             condList.append("answer = '{}'".format(answer))
         cond = 'where ' + ' or '.join(condList) if condList else ''
@@ -1253,7 +1253,7 @@ class RecorderEffect(Recorder):
 
         condList = []
         if question:
-            condList.append("question like '{}%'".format(questionHead))
+            condList.append("question like '%{}%'".format(questionHead))
         if questionEffect:
             condList.append("questionEffect = '{}'".format(questionEffect))
         if answerList:
@@ -1382,7 +1382,7 @@ class RecorderOrder(Recorder):
         answerList = self._answerFrame.answer
         condList = []
         if question:
-            condList.append("question like '{}%'".format(questionHead))
+            condList.append("question like '%{}%'".format(questionHead))
         if answerList:
             for answer in answerList:
                 condList.extend([
@@ -1522,7 +1522,7 @@ class RecorderConnect(Recorder):
         optionRightList = self._optionRightFrame.answer
         condList = []
         if question:
-            condList.append("question like '{}%'".format(questionHead))
+            condList.append("question like '%{}%'".format(questionHead))
         if optionLeftList:
             for optL in optionLeftList:
                 condList.extend([
@@ -1676,7 +1676,7 @@ class RecorderMulti(Recorder):
         dummyList = self._dummyFrame.answer
         condList = []
         if question:
-            condList.append("question like '{}%'".format(questionHead))
+            condList.append("question like '%{}%'".format(questionHead))
         if answerList:
             for answer in answerList:
                 for column in ('answer', 'dummy'):
@@ -1837,7 +1837,7 @@ class RecorderGroup(Recorder):
         group3List = self._group3Frame.answer
         condList = []
         if question:
-            condList.append("question like '{}%'".format(questionHead))
+            condList.append("question like '%{}%'".format(questionHead))
         for groupList in (group1List, group2List, group3List):
             if not groupList:
                 continue
@@ -1984,7 +1984,7 @@ class RecorderFirstcome(Recorder):
         dummyList = self._dummyFrame.answer
         condList = []
         if question:
-            condList.append("question like '{}%'".format(questionHead))
+            condList.append("question like '%{}%'".format(questionHead))
         if answerList:
             for answer in answerList:
                 for column in ('answer', 'dummy'):
@@ -2124,7 +2124,7 @@ class RecorderImagetouch(Recorder):
 
         condList = []
         if question:
-            condList.append("question like '{}%'".format(questionHead))
+            condList.append("question like '%{}%'".format(questionHead))
         cond = 'where ' + ' or '.join(condList) if condList else ''
 
         header = [(
