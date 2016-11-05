@@ -713,13 +713,7 @@ class RecorderPanel(Recorder):
             condList.append("question like '%{}%'".format(questionHead))
         if answerList:
             for answer in answerList:
-                condList.extend([
-                    s.format(answer) for s in
-                    [
-                        "answer like '%\n{0}\n%'", "answer like '{0}\n%'",
-                        "answer like '%\n{0}'", "answer like '{0}'"
-                    ]
-                ])
+                condList.append("answer like '%{}%'".format(answer))
         cond = 'where ' + ' or '.join(condList) if condList else ''
 
         header = [(
@@ -934,13 +928,7 @@ class RecorderTyping(Recorder):
             condList.append("question like '%{}%'".format(questionHead))
         if answerList:
             for answer in answerList:
-                condList.extend([
-                    s.format(answer) for s in
-                    [
-                        "answer like '%\n{0}\n%'", "answer like '{0}\n%'",
-                        "answer like '%\n{0}'", "answer like '{0}'"
-                    ]
-                ])
+                condList.append("answer like '%{}%'".format(answer))
         cond = 'where ' + ' or '.join(condList) if condList else ''
 
         header = [(
@@ -1134,13 +1122,7 @@ class RecorderEffect(Recorder):
             condList.append("questionEffect = '{}'".format(questionEffect))
         if answerList:
             for answer in answerList:
-                condList.extend([
-                    s.format(answer) for s in
-                    [
-                        "answer like '%\n{0}\n%'", "answer like '{0}\n%'",
-                        "answer like '%\n{0}'", "answer like '{0}'"
-                    ]
-                ])
+                condList.append("answer like '%{}%'".format(answer))
         cond = 'where ' + ' or '.join(condList) if condList else ''
 
         header = [(
@@ -1253,13 +1235,7 @@ class RecorderOrder(Recorder):
             condList.append("question like '%{}%'".format(questionHead))
         if answerList:
             for answer in answerList:
-                condList.extend([
-                    s.format(answer) for s in
-                    [
-                        "answer like '%\n{0}\n%'", "answer like '{0}\n%'",
-                        "answer like '%\n{0}'", "answer like '{0}'"
-                    ]
-                ])
+                condList.append("answer like '%{}%'".format(answer))
         cond = 'where ' + ' or '.join(condList) if condList else ''
 
         header = [(
@@ -1385,26 +1361,10 @@ class RecorderConnect(Recorder):
             condList.append("question like '%{}%'".format(questionHead))
         if optionLeftList:
             for optL in optionLeftList:
-                condList.extend([
-                    s.format(optL) for s in
-                    [
-                        "option_left like '%\n{0}\n%'",
-                        "option_left like '{0}\n%'",
-                        "option_left like '%\n{0}'",
-                        "option_left like '{0}'"
-                    ]
-                ])
+                condList.append("option_left like '%{}%'".format(optL))
         if optionRightList:
             for optR in optionRightList:
-                condList.extend([
-                    s.format(optR) for s in
-                    [
-                        "option_right like '%\n{0}\n%'",
-                        "option_right like '{0}\n%'",
-                        "option_right like '%\n{0}'",
-                        "option_right like '{0}'"
-                    ]
-                ])
+                condList.append("option_right like '%{}%'".format(optR))
         cond = 'where ' + ' or '.join(condList) if condList else ''
 
         header = [(
@@ -1529,26 +1489,13 @@ class RecorderMulti(Recorder):
         condList = []
         if questionHead:
             condList.append("question like '%{}%'".format(questionHead))
-        if answerList:
-            for answer in answerList:
-                for column in ('answer', 'dummy'):
-                    condList.extend([
-                        s.format(column, answer) for s in
-                        [
-                            "{0} like '%\n{1}\n%'", "{0} like '{1}\n%'",
-                            "{0} like '%\n{1}'", "{0} like '{1}'"
-                        ]
-                    ])
-        if dummyList:
-            for dummy in dummyList:
-                for column in ('answer', 'dummy'):
-                    condList.extend([
-                        s.format(column, dummy) for s in
-                        [
-                            "{0} like '%\n{1}\n%'", "{0} like '{1}\n%'",
-                            "{0} like '%\n{1}'", "{0} like '{1}'"
-                        ]
-                    ])
+        for column in ('answer', 'dummy'):
+            if answerList:
+                for answer in answerList:
+                    condList.append("{} like '%{}%'".format(column, answer))
+            if dummyList:
+                for dummy in dummyList:
+                    condList.append("{} like '%{}%'".format(column, dummy))
         cond = 'where ' + ' or '.join(condList) if condList else ''
 
         header = [(
@@ -1687,13 +1634,7 @@ class RecorderGroup(Recorder):
                 continue
             for groupItem in groupList:
                 for column in ('group1', 'group2', 'group3'):
-                    condList.extend([
-                        s.format(column, groupItem) for s in
-                        [
-                            "{0} like '%\n{1}\n%'", "{0} like '{1}\n%'",
-                            "{0} like '%\n{1}'", "{0} like '{1}'"
-                        ]
-                    ])
+                    condList.append("{} like '%{}%'".format(column, groupItem))
 
         cond = 'where ' + ' or '.join(condList) if condList else ''
 
@@ -1821,26 +1762,13 @@ class RecorderFirstcome(Recorder):
         condList = []
         if questionHead:
             condList.append("question like '%{}%'".format(questionHead))
-        if answerList:
-            for answer in answerList:
-                for column in ('answer', 'dummy'):
-                    condList.extend([
-                        s.format(column, answer) for s in
-                        [
-                            "{0} like '%\n{1}\n%'", "{0} like '{1}\n%'",
-                            "{0} like '%\n{1}'", "{0} like '{1}'"
-                        ]
-                    ])
-        if dummyList:
-            for dummy in dummyList:
-                for column in ('answer', 'dummy'):
-                    condList.extend([
-                        s.format(column, dummy) for s in
-                        [
-                            "{0} like '%\n{1}\n%'", "{0} like '{1}\n%'",
-                            "{0} like '%\n{1}'", "{0} like '{1}'"
-                        ]
-                    ])
+        for column in ('answer', 'dummy'):
+            if answerList:
+                for answer in answerList:
+                    condList.append("{} like '%{}%'".format(column, answer))
+            if dummyList:
+                for dummy in dummyList:
+                    condList.append("{} like '%{}%'".format(column, dummy))
         cond = 'where ' + ' or '.join(condList) if condList else ''
 
         header = [(
