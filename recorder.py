@@ -1483,19 +1483,18 @@ class RecorderGroup(Recorder):
 
         outerFrame = tk.Frame()
 
-        topFrame = tk.LabelFrame(outerFrame,
-            text = '各グループの一行目はグループ名（ヘッダ）')
+        topFrame = tk.Frame(outerFrame)
         topFrame.pack()
         self._group1Frame = AnswerTextFrame(topFrame)
-        self._group1Frame['text'] = 'グループ１'
+        self._group1Frame['text'] = 'グループ１（一行目はグループ名）'
         self._group1Frame.answerText['width'] = 30
         self._group1Frame.pack(side = tk.LEFT)
         self._group2Frame = AnswerTextFrame(topFrame)
-        self._group2Frame['text'] = 'グループ２'
+        self._group2Frame['text'] = 'グループ２（一行目はグループ名）'
         self._group2Frame.answerText['width'] = 30
         self._group2Frame.pack(side = tk.LEFT)
         self._group3Frame = AnswerTextFrame(topFrame)
-        self._group3Frame['text'] = 'グループ３'
+        self._group3Frame['text'] = 'グループ３（一行目はグループ名）'
         self._group3Frame.answerText['width'] = 30
         self._group3Frame.pack(side = tk.LEFT)
 

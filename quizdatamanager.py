@@ -185,9 +185,9 @@ class QuizDataManager(tk.Frame):
 # __recorderList :: __makeRecorderList
 # __genreBox, __subGenreBox, __examGenreBox, __seriesBox
 #     :: __createGenreSeriesFrame
-# __questionFrame :: __createQuestionFrame
+# __questionFrame, __pictureIdEF :: __createQuestionFrame
 # __mainNbook :: __createMainNotebook
-# __pictureIdEF, __commentText :: __createSupplementalFrame
+# __commentText :: __createSupplementalFrame
 # __registerButton :: __createBottomButton
 
     def __init__(self, master, qdManip):
@@ -289,6 +289,8 @@ class QuizDataManager(tk.Frame):
     def __createQuestionFrame(self):
         self.__questionFrame = QuestionFrame(self)
         self.__questionFrame.pack()
+        self.__pictureIdEF = EntryFrame(self, text = '画像ID')
+        self.__pictureIdEF.pack()
 
 
     def __createMainNotebook(self):
@@ -317,9 +319,6 @@ class QuizDataManager(tk.Frame):
         difficultyList = [(x, x) for x in range(1, 6)]
 
         outerFrame = tk.Frame(self)
-
-        self.__pictureIdEF = EntryFrame(outerFrame, text = '画像ID')
-        self.__pictureIdEF.pack()
 
         commentFrame = tk.LabelFrame(outerFrame, text = 'コメント')
         commentFrame.pack()
