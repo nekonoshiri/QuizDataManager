@@ -10,10 +10,10 @@ class QuestionFrame(tk.LabelFrame):
         super().__init__(master, **option)
         self['text'] = '問題'
         self.questionText = ScrolledText(self, height = 5)
-        self.questionText.pack()
+        self.questionText.pack(side = tk.LEFT)
         formatButton = tk.Button(self, text = '整形')
         formatButton['command'] = self.formatQuestion
-        formatButton.pack(anchor = tk.E)
+        formatButton.pack(side = tk.LEFT)
 
 
     @property
