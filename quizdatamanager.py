@@ -177,6 +177,7 @@ class QuizDataManager(tk.Frame):
         self.__difficulty_min = 1
         self.__difficulty_max = 5
         self.__stableVar = tk.IntVar()
+        self.genreSearchVar = tk.BooleanVar(value = False)
         self.__subGenreFixVar = tk.BooleanVar(value = False)
         self.stable = StableType.Undefined
         self.__searchWindow = None
@@ -245,6 +246,9 @@ class QuizDataManager(tk.Frame):
         self.__genreBox.pack()
         genreShowLabel = tk.Label(genreFrame, bg = 'LightPink')
         genreShowLabel.pack()
+        genreSearchCB = tk.Checkbutton(genreFrame,
+            text = '検索条件に含める', variable = self.genreSearchVar)
+        genreSearchCB.pack()
 
         subGenreFrame = tk.LabelFrame(outerFrame, text = 'サブジャンル')
         subGenreFrame.pack(side = tk.LEFT, anchor = tk.N)

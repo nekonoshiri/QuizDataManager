@@ -143,6 +143,15 @@ class Recorder(object, metaclass = ABCMeta):
     #for search
     def selectFromJoinedTable(self, table, columns, cond = '', params = [],
             assocType = False, multiType = False):
+        qdm = self._qdManager
+        if qdm.genreSearchVar.get() and qdm.genreId is not None:
+            if cond:
+                condComp = 'where ({}) and genre.id = {}'.format(cond,
+                    qdm.genreId)
+            else:
+                condComp = 'where genre.id = {}'.format(qdm.genreId)
+        else:
+            condComp = 'where {}'.format(cond) if cond else ''
         joinedTable = '''(((({0}
         inner join subgenre on {0}.subgenre = subgenre.id)
         inner join genre on subgenre.genre = genre.id)
@@ -158,7 +167,8 @@ class Recorder(object, metaclass = ABCMeta):
             joinedTable = '''
             ({0}) inner join multitype on {1}.multitype = multitype.id
             '''.format(joinedTable, table)
-        return self._qdManip.select(columns, joinedTable, cond, params)
+        return self._qdManip.select(columns, joinedTable, condComp,
+                params)
 
 
 
@@ -259,7 +269,7 @@ class RecorderOX(Recorder):
                 "replace(replace(answer, 1, '○'), 0, '×')",
                 'comment', 'stable.stable', 'series.series', 'picture_id'
             ],
-            "where question like '%{}%'".format(questionHead)
+            "question like '%{}%'".format(questionHead)
         )
         return header + result
 
@@ -352,7 +362,7 @@ class RecorderFour(Recorder):
                     s.format(answer), s.format(dummy1),
                     s.format(dummy2), s.format(dummy3)
                 ])
-        cond = 'where ' + ' or '.join(condList) if condList else ''
+        cond = ' or '.join(condList) if condList else ''
 
         header = [(
             'ID', 'ジャンル', 'サブジャンル', '検定ジャンル',
@@ -492,7 +502,7 @@ class RecorderAssoc(Recorder):
                     s.format(answer), s.format(dummy1),
                     s.format(dummy2), s.format(dummy3)
                 ])
-        cond = 'where ' + ' or '.join(condList) if condList else ''
+        cond = ' or '.join(condList) if condList else ''
 
         header = [(
             'ID', 'ジャンル', 'サブジャンル', '検定ジャンル',
@@ -586,7 +596,7 @@ class RecorderSort(Recorder):
             condList.append("question like '%{}%'".format(questionHead))
         if answer:
             condList.append("answer = '{}'".format(answer))
-        cond = 'where ' + ' or '.join(condList) if condList else ''
+        cond = ' or '.join(condList) if condList else ''
 
         header = [(
             'ID', 'ジャンル', 'サブジャンル', '検定ジャンル',
@@ -695,7 +705,7 @@ class RecorderPanel(Recorder):
         if answerList:
             for answer in answerList:
                 condList.append("answer like '%{}%'".format(answer))
-        cond = 'where ' + ' or '.join(condList) if condList else ''
+        cond = ' or '.join(condList) if condList else ''
 
         header = [(
             'ID', 'ジャンル', 'サブジャンル', '検定ジャンル',
@@ -807,7 +817,7 @@ class RecorderSlot(Recorder):
                     s.format(answer), s.format(dummy1),
                     s.format(dummy2), s.format(dummy3)
                 ])
-        cond = 'where ' + ' or '.join(condList) if condList else ''
+        cond = ' or '.join(condList) if condList else ''
 
         header = [(
             'ID', 'ジャンル', 'サブジャンル', '検定ジャンル',
@@ -898,7 +908,7 @@ class RecorderTyping(Recorder):
         if answerList:
             for answer in answerList:
                 condList.append("answer like '%{}%'".format(answer))
-        cond = 'where ' + ' or '.join(condList) if condList else ''
+        cond = ' or '.join(condList) if condList else ''
 
         header = [(
             'ID', 'ジャンル', 'サブジャンル', '検定ジャンル',
@@ -984,7 +994,7 @@ class RecorderCube(Recorder):
             condList.append("question like '%{}%'".format(questionHead))
         if answer:
             condList.append("answer = '{}'".format(answer))
-        cond = 'where ' + ' or '.join(condList) if condList else ''
+        cond = ' or '.join(condList) if condList else ''
 
         header = [(
             'ID', 'ジャンル', 'サブジャンル', '検定ジャンル',
@@ -1080,7 +1090,7 @@ class RecorderEffect(Recorder):
         if answerList:
             for answer in answerList:
                 condList.append("answer like '%{}%'".format(answer))
-        cond = 'where ' + ' or '.join(condList) if condList else ''
+        cond = ' or '.join(condList) if condList else ''
 
         header = [(
             'ID', 'ジャンル', 'サブジャンル', '検定ジャンル',
@@ -1187,7 +1197,7 @@ class RecorderOrder(Recorder):
         if answerList:
             for answer in answerList:
                 condList.append("answer like '%{}%'".format(answer))
-        cond = 'where ' + ' or '.join(condList) if condList else ''
+        cond = ' or '.join(condList) if condList else ''
 
         header = [(
             'ID', 'ジャンル', 'サブジャンル', '検定ジャンル',
@@ -1310,7 +1320,7 @@ class RecorderConnect(Recorder):
         if optionRightList:
             for optR in optionRightList:
                 condList.append("option_right like '%{}%'".format(optR))
-        cond = 'where ' + ' or '.join(condList) if condList else ''
+        cond = ' or '.join(condList) if condList else ''
 
         header = [(
             'ID', 'ジャンル', 'サブジャンル', '検定ジャンル',
@@ -1435,7 +1445,7 @@ class RecorderMulti(Recorder):
             if dummyList:
                 for dummy in dummyList:
                     condList.append("{} like '%{}%'".format(column, dummy))
-        cond = 'where ' + ' or '.join(condList) if condList else ''
+        cond = ' or '.join(condList) if condList else ''
 
         header = [(
             'ID', 'ジャンル', 'サブジャンル', '検定ジャンル',
@@ -1568,7 +1578,7 @@ class RecorderGroup(Recorder):
                 for column in ('group1', 'group2', 'group3'):
                     condList.append("{} like '%{}%'".format(column, groupItem))
 
-        cond = 'where ' + ' or '.join(condList) if condList else ''
+        cond = ' or '.join(condList) if condList else ''
 
         header = [(
             'ID', 'ジャンル', 'サブジャンル', '検定ジャンル',
@@ -1695,7 +1705,7 @@ class RecorderFirstcome(Recorder):
             if dummyList:
                 for dummy in dummyList:
                     condList.append("{} like '%{}%'".format(column, dummy))
-        cond = 'where ' + ' or '.join(condList) if condList else ''
+        cond = ' or '.join(condList) if condList else ''
 
         header = [(
             'ID', 'ジャンル', 'サブジャンル', '検定ジャンル',
@@ -1797,7 +1807,7 @@ class RecorderImagetouch(Recorder):
         condList = []
         if questionHead:
             condList.append("question like '%{}%'".format(questionHead))
-        cond = 'where ' + ' or '.join(condList) if condList else ''
+        cond = ' or '.join(condList) if condList else ''
 
         header = [(
             'ID', 'ジャンル', 'サブジャンル', '検定ジャンル',
