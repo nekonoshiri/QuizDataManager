@@ -84,6 +84,16 @@ class Recorder(object, metaclass = ABCMeta):
             'where id = ?', [quizId])[0]
 
 
+    def recordCommon(self, quizId, columns, values):
+        if self._qdManager.recordMode == RecordMode.Insert:
+            self._qdManip.insert(self.tableName, columns, values)
+        else:
+            self._qdManip.update(self.tableName, columns, values,
+                'where id = {}'.format(quizId)
+            )
+            self._qdManager.setRecordMode(RecordMode.Insert)
+
+
     def editCommon(self, quizId, subGenreId, examGenreId,
             difficulty_min, difficulty_max, question,
             comment, stable, seriesId, pictureId):
@@ -149,6 +159,7 @@ class Recorder(object, metaclass = ABCMeta):
             ({0}) inner join multitype on {1}.multitype = multitype.id
             '''.format(joinedTable, table)
         return self._qdManip.select(columns, joinedTable, cond, params)
+
 
 
 @recorder
@@ -217,13 +228,7 @@ class RecorderOX(Recorder):
             qdm.question, answer,
             qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
         ]
-        if qdm.recordMode == RecordMode.Insert:
-            self._qdManip.insert(self.tableName, columns, values)
-        else:
-            self._qdManip.update(self.tableName, columns, values,
-                'where id = {}'.format(quizId)
-            )
-            qdm.setRecordMode(RecordMode.Insert)
+        self.recordCommon(quizId, columns, values)
 
 
     def edit(self, quizId):
@@ -309,13 +314,7 @@ class RecorderFour(Recorder):
             qdm.question, answer, dummy1, dummy2, dummy3,
             qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
         ]
-        if qdm.recordMode == RecordMode.Insert:
-            self._qdManip.insert(self.tableName, columns, values)
-        else:
-            self._qdManip.update(self.tableName, columns, values,
-                'where id = {}'.format(quizId)
-            )
-            qdm.setRecordMode(RecordMode.Insert)
+        self.recordCommon(quizId, columns, values)
 
 
     def edit(self, quizId):
@@ -452,13 +451,7 @@ class RecorderAssoc(Recorder):
             qdm.question, answer, dummy1, dummy2, dummy3, self._assocTypeId,
             qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
         ]
-        if qdm.recordMode == RecordMode.Insert:
-            self._qdManip.insert(self.tableName, columns, values)
-        else:
-            self._qdManip.update(self.tableName, columns, values,
-                'where id = {}'.format(quizId)
-            )
-            qdm.setRecordMode(RecordMode.Insert)
+        self.recordCommon(quizId, columns, values)
 
 
     def edit(self, quizId):
@@ -569,13 +562,7 @@ class RecorderSort(Recorder):
             qdm.question, answer,
             qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
         ]
-        if qdm.recordMode == RecordMode.Insert:
-            self._qdManip.insert(self.tableName, columns, values)
-        else:
-            self._qdManip.update(self.tableName, columns, values,
-                'where id = {}'.format(quizId)
-            )
-            qdm.setRecordMode(RecordMode.Insert)
+        self.recordCommon(quizId, columns, values)
 
 
     def edit(self, quizId):
@@ -682,13 +669,7 @@ class RecorderPanel(Recorder):
             qdm.question, answerStr, panel,
             qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
         ]
-        if qdm.recordMode == RecordMode.Insert:
-            self._qdManip.insert(self.tableName, columns, values)
-        else:
-            self._qdManip.update(self.tableName, columns, values,
-                'where id = {}'.format(quizId)
-            )
-            qdm.setRecordMode(RecordMode.Insert)
+        self.recordCommon(quizId, columns, values)
 
 
     def edit(self, quizId):
@@ -788,13 +769,7 @@ class RecorderSlot(Recorder):
             qdm.question, answer, dummy1, dummy2, dummy3,
             qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
         ]
-        if qdm.recordMode == RecordMode.Insert:
-            self._qdManip.insert(self.tableName, columns, values)
-        else:
-            self._qdManip.update(self.tableName, columns, values,
-                'where id = {}'.format(quizId)
-            )
-            qdm.setRecordMode(RecordMode.Insert)
+        self.recordCommon(quizId, columns, values)
 
 
     def edit(self, quizId):
@@ -897,13 +872,7 @@ class RecorderTyping(Recorder):
             qdm.question, typingtype, answer,
             qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
         ]
-        if qdm.recordMode == RecordMode.Insert:
-            self._qdManip.insert(self.tableName, columns, values)
-        else:
-            self._qdManip.update(self.tableName, columns, values,
-                'where id = {}'.format(quizId)
-            )
-            qdm.setRecordMode(RecordMode.Insert)
+        self.recordCommon(quizId, columns, values)
 
 
     def edit(self, quizId):
@@ -990,13 +959,7 @@ class RecorderCube(Recorder):
             qdm.question, typingtype, answer,
             qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
         ]
-        if qdm.recordMode == RecordMode.Insert:
-            self._qdManip.insert(self.tableName, columns, values)
-        else:
-            self._qdManip.update(self.tableName, columns, values,
-                'where id = {}'.format(quizId)
-            )
-            qdm.setRecordMode(RecordMode.Insert)
+        self.recordCommon(quizId, columns, values)
 
 
     def edit(self, quizId):
@@ -1087,13 +1050,7 @@ class RecorderEffect(Recorder):
             qdm.question, questionEffect, typingtype, answer,
             qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
         ]
-        if qdm.recordMode == RecordMode.Insert:
-            self._qdManip.insert(self.tableName, columns, values)
-        else:
-            self._qdManip.update(self.tableName, columns, values,
-                'where id = {}'.format(quizId)
-            )
-            qdm.setRecordMode(RecordMode.Insert)
+        self.recordCommon(quizId, columns, values)
 
 
     def edit(self, quizId):
@@ -1205,13 +1162,7 @@ class RecorderOrder(Recorder):
             qdm.question, answerStr, self._multiTypeId,
             qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
         ]
-        if qdm.recordMode == RecordMode.Insert:
-            self._qdManip.insert(self.tableName, columns, values)
-        else:
-            self._qdManip.update(self.tableName, columns, values,
-                'where id = {}'.format(quizId)
-            )
-            qdm.setRecordMode(RecordMode.Insert)
+        self.recordCommon(quizId, columns, values)
 
 
     def edit(self, quizId):
@@ -1329,13 +1280,7 @@ class RecorderConnect(Recorder):
             qdm.question, optionLeftStr, optionRightStr, self._multiTypeId,
             qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
         ]
-        if qdm.recordMode == RecordMode.Insert:
-            self._qdManip.insert(self.tableName, columns, values)
-        else:
-            self._qdManip.update(self.tableName, columns, values,
-                'where id = {}'.format(quizId)
-            )
-            qdm.setRecordMode(RecordMode.Insert)
+        self.recordCommon(quizId, columns, values)
 
 
     def edit(self, quizId):
@@ -1459,13 +1404,7 @@ class RecorderMulti(Recorder):
             qdm.question, answerStr, dummyStr, self._multiTypeId,
             qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
         ]
-        if qdm.recordMode == RecordMode.Insert:
-            self._qdManip.insert(self.tableName, columns, values)
-        else:
-            self._qdManip.update(self.tableName, columns, values,
-                'where id = {}'.format(quizId)
-            )
-            qdm.setRecordMode(RecordMode.Insert)
+        self.recordCommon(quizId, columns, values)
 
 
     def edit(self, quizId):
@@ -1597,13 +1536,7 @@ class RecorderGroup(Recorder):
             qdm.question, group1Str, group2Str, group3Str, self._multiTypeId,
             qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
         ]
-        if qdm.recordMode == RecordMode.Insert:
-            self._qdManip.insert(self.tableName, columns, values)
-        else:
-            self._qdManip.update(self.tableName, columns, values,
-                'where id = {}'.format(quizId)
-            )
-            qdm.setRecordMode(RecordMode.Insert)
+        self.recordCommon(quizId, columns, values)
 
 
     def edit(self, quizId):
@@ -1732,13 +1665,7 @@ class RecorderFirstcome(Recorder):
             qdm.question, answerStr, dummyStr, self._multiTypeId,
             qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
         ]
-        if qdm.recordMode == RecordMode.Insert:
-            self._qdManip.insert(self.tableName, columns, values)
-        else:
-            self._qdManip.update(self.tableName, columns, values,
-                'where id = {}'.format(quizId)
-            )
-            qdm.setRecordMode(RecordMode.Insert)
+        self.recordCommon(quizId, columns, values)
 
 
     def edit(self, quizId):
@@ -1851,13 +1778,7 @@ class RecorderImagetouch(Recorder):
             qdm.question, qdm.comment, qdm.stable,
             qdm.seriesId, qdm.pictureId, pictureAnswerId
         ]
-        if qdm.recordMode == RecordMode.Insert:
-            self._qdManip.insert(self.tableName, columns, values)
-        else:
-            self._qdManip.update(self.tableName, columns, values,
-                'where id = {}'.format(quizId)
-            )
-            qdm.setRecordMode(RecordMode.Insert)
+        self.recordCommon(quizId, columns, values)
 
 
     def edit(self, quizId):
