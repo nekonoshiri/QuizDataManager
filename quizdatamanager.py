@@ -1,9 +1,11 @@
 from enum import Enum, IntEnum
+import platform
 from sqlite3 import IntegrityError
 import tkinter as tk
 import tkinter.ttk as ttk
 from tkinter import messagebox
 from tkinter.scrolledtext import ScrolledText
+
 from tkcommon import EntryFrame
 from tkhelper import ListboxIdd, ComboboxIdd
 import validationException as ve
@@ -464,7 +466,32 @@ class SearchWindow(tk.Toplevel):
 
         canvas.create_window(0, 0, anchor = tk.NW, window = innerFrame)
         innerFrame.update_idletasks()
-        canvas.config(scrollregion=canvas.bbox("all"))
+        canvas.config(scrollregion = canvas.bbox("all"))
+        self.__bindMouseWheel(canvas)
+
+
+    def __bindMouseWheel(self, canvas):
+        def onMouseWheel(evt):
+            factor = 1
+            if OS == 'Linux':
+                if evt.num == 4:
+                    canvas.yview_scroll(-1 * factor, tk.UNITS)
+                elif evt.num == 5:
+                    canvas.yview_scroll(factor, tk.UNITS)
+            elif OS == 'Windows':
+                canvas.yview_scroll(-1 * int((evt.delta / 120) * factor),
+                    tk.UNITS)
+            elif OS == 'Darwin':
+                canvas.yview_scroll(evt.delta, tk.UNITS)
+
+
+        OS = platform.system()
+        if OS == 'Linux':
+            canvas.bind_all('<Button-4>', onMouseWheel)
+            canvas.bind_all('<Button-5>', onMouseWheel)
+        else:
+            canvas.bind_all('<MouseWheel>', onMouseWheel)
+
 
 
     def __onEditButtonPush(self, quizId):
