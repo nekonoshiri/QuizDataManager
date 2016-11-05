@@ -456,7 +456,7 @@ class SearchWindow(tk.Toplevel):
         yscroll.grid(row = 0, column = 1, sticky = tk.N + tk.S)
         xscroll = tk.Scrollbar(self, orient = tk.HORIZONTAL)
         xscroll.grid(row = 1, column = 0, sticky = tk.E + tk.W)
-        canvas = tk.Canvas(self, width = 1000,
+        canvas = tk.Canvas(self,
             yscrollcommand = yscroll.set,
             xscrollcommand = xscroll.set)
         canvas.grid(row = 0, column = 0,
@@ -487,6 +487,7 @@ class SearchWindow(tk.Toplevel):
         innerFrame.update_idletasks()
         canvas.config(scrollregion = canvas.bbox("all"))
         self.__bindMouseWheel(canvas)
+        canvas.config(width = innerFrame.winfo_width())
 
 
     def __bindMouseWheel(self, canvas):
