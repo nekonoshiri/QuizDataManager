@@ -422,24 +422,10 @@ class RecorderAssoc(Recorder):
 
         outerFrame = tk.Frame()
 
-        topFrame = tk.Frame(outerFrame)
-        topFrame.pack()
+        self._questionFrame = QuestionFrame(outerFrame)
+        self._questionFrame.pack()
 
-        questionFrame = tk.Frame(topFrame)
-        questionFrame.pack(side = tk.LEFT)
-        self._question1EF = EntryFrame(questionFrame, text = 'ヒント１')
-        self._question1EF.pack()
-        self._question2EF = EntryFrame(questionFrame, text = 'ヒント２')
-        self._question2EF.pack()
-        self._question3EF = EntryFrame(questionFrame, text = 'ヒント３')
-        self._question3EF.pack()
-        self._question4EF = EntryFrame(questionFrame, text = 'ヒント４')
-        self._question4EF.pack()
-
-        paddingFrame = tk.Frame(topFrame, width = 50)
-        paddingFrame.pack(side = tk.LEFT)
-
-        answerFrame = tk.Frame(topFrame)
+        answerFrame = tk.Frame(outerFrame)
         answerFrame.pack(side = tk.LEFT)
         self._answerEF = EntryFrame(answerFrame, text = '答え')
         self._answerEF.pack()
@@ -451,7 +437,7 @@ class RecorderAssoc(Recorder):
         self._dummy3EF.pack()
 
         bottomFrame = tk.LabelFrame(outerFrame, text = '連想タイプ')
-        bottomFrame.pack()
+        bottomFrame.pack(side = tk.LEFT)
         self._assocTypeBox = ListboxIdd(bottomFrame, height = 4)
         self._assocTypeBox.iddList = self._qdManip.getAssocTypeList()
         self._assocTypeBox.onSelect = onAssocTypeBoxSelect
@@ -467,12 +453,11 @@ class RecorderAssoc(Recorder):
 
     def record(self, quizId = None):
         qdm = self._qdManager
-        question1 = self._question1EF.getEntryText()
-        question2 = self._question2EF.getEntryText()
-        question3 = self._question3EF.getEntryText()
-        question4 = self._question4EF.getEntryText()
-        for s in (question1, question2, question3, question4):
-            if not s: raise ve.QuestionBlankError
+        question = self._questionFrame.question
+        if not question:
+            raise ve.QuestionBlankError
+        if question.count('\n') > 3:
+            raise ve.AssocLengthError
         answer = self._answerEF.getEntryText()
         dummy1 = self._dummy1EF.getEntryText()
         dummy2 = self._dummy2EF.getEntryText()
@@ -482,15 +467,13 @@ class RecorderAssoc(Recorder):
         columns = [
             'subgenre', 'examgenre',
             'difficulty_min', 'difficulty_max',
-            'question1', 'question2', 'question3', 'question4',
-            'answer', 'dummy1', 'dummy2', 'dummy3', 'assoctype',
+            'question', 'answer', 'dummy1', 'dummy2', 'dummy3', 'assoctype',
             'comment', 'stable', 'series', 'picture_id'
         ]
         values = [
             qdm.subGenreId, qdm.examGenreId,
             qdm.difficulty_min, qdm.difficulty_max,
-            question1, question2, question3, question4,
-            answer, dummy1, dummy2, dummy3, self._assocTypeId,
+            question, answer, dummy1, dummy2, dummy3, self._assocTypeId,
             qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
         ]
         if qdm.recordMode == RecordMode.Insert:
@@ -505,14 +488,10 @@ class RecorderAssoc(Recorder):
     def edit(self, quizId):
         qdm = self._qdManager
         (_, subGenreId, examGenreId, difficulty_min, difficulty_max,
-            question1, question2, question3, question4,
-            answer, dummy1, dummy2, dummy3, assoctype,
+            question, answer, dummy1, dummy2, dummy3, assoctype,
             comment, stable, _, _, _, seriesId, pictureId
         ) = self.getQuizData(quizId)
-        self._question1EF.setEntryText(question1)
-        self._question2EF.setEntryText(question2)
-        self._question3EF.setEntryText(question3)
-        self._question4EF.setEntryText(question4)
+        self._questionFrame.question = question
         self._answerEF.setEntryText(answer)
         self._dummy1EF.setEntryText(dummy1)
         self._dummy2EF.setEntryText(dummy2)
@@ -524,42 +503,34 @@ class RecorderAssoc(Recorder):
 
 
     def search(self):
-        question1 = self._question1EF.getEntryText()
-        question2 = self._question2EF.getEntryText()
-        question3 = self._question3EF.getEntryText()
-        question4 = self._question4EF.getEntryText()
+        question = self._questionFrame.question
         answer = self._answerEF.getEntryText()
         dummy1 = self._dummy1EF.getEntryText()
         dummy2 = self._dummy2EF.getEntryText()
         dummy3 = self._dummy3EF.getEntryText()
-        if any((question1, question2, question3, question4,
-                answer, dummy1, dummy2, dummy3)):
-            cond = """where
-            question1 = '{0}' or question1 = '{1}'
-            or question1 = '{2}' or question1 = '{3}'
-            or question2 = '{0}' or question2 = '{1}'
-            or question2 = '{2}' or question2 = '{3}'
-            or question3 = '{0}' or question3 = '{1}'
-            or question3 = '{2}' or question3 = '{3}'
-            or question4 = '{0}' or question4 = '{1}'
-            or question4 = '{2}' or question4 = '{3}'
-            or answer = '{4}' or answer = '{5}'
-            or answer = '{6}' or answer = '{7}'
-            or dummy1 = '{4}' or dummy1 = '{5}'
-            or dummy1 = '{6}' or dummy1 = '{7}'
-            or dummy2 = '{4}' or dummy2 = '{5}'
-            or dummy2 = '{6}' or dummy2 = '{7}'
-            or dummy3 = '{4}' or dummy3 = '{5}'
-            or dummy3 = '{6}' or dummy3 = '{7}'
-            """.format(question1, question2, question3, question4,
-                answer, dummy1, dummy2, dummy3)
-        else:
-            cond = ''
+
+        condList = []
+        if question:
+            for q in question.split('\n'):
+                condList.append("question like '%{}%'".format(q))
+
+        if any((answer, dummy1, dummy2, dummy3)):
+            l = [
+                "answer = '{}'", "dummy1 = '{}'",
+                "dummy2 = '{}'", "dummy3 = '{}'"
+            ]
+            for s in l:
+                condList.extend([
+                    s.format(answer), s.format(dummy1),
+                    s.format(dummy2), s.format(dummy3)
+                ])
+        cond = 'where ' + ' or '.join(condList) if condList else ''
+
         header = [(
             'ID', 'ジャンル', 'サブジャンル', '検定ジャンル',
             '☆下限', '☆上限',
-            '問題１', '問題２', '問題３', '問題４',
-            '答え', 'ダミー１', 'ダミー２', 'ダミー３', '連想タイプ',
+            '問題', '答え', 'ダミー１', 'ダミー２', 'ダミー３',
+            '連想タイプ',
             'コメント', '安定性', 'シリーズ', '画像ID'
         )]
         result = self.selectFromJoinedTable(
@@ -568,8 +539,8 @@ class RecorderAssoc(Recorder):
                 '{}.id'.format(self.tableName),
                 'genre.genre', 'subgenre.subgenre', 'examgenre.examgenre',
                 'difficulty_min', 'difficulty_max',
-                'question1', 'question2', 'question3', 'question4',
-                'answer', 'dummy1', 'dummy2', 'dummy3','assoctype.assoctype',
+                'question', 'answer', 'dummy1', 'dummy2', 'dummy3',
+                'assoctype.assoctype',
                 'comment', 'stable.stable', 'series.series', 'picture_id'
             ],
             cond,
@@ -579,10 +550,7 @@ class RecorderAssoc(Recorder):
 
 
     def cleanUp(self):
-        self._question1EF.deleteEntryText()
-        self._question2EF.deleteEntryText()
-        self._question3EF.deleteEntryText()
-        self._question4EF.deleteEntryText()
+        self._questionFrame.question = ''
         self._answerEF.deleteEntryText()
         self._dummy1EF.deleteEntryText()
         self._dummy2EF.deleteEntryText()

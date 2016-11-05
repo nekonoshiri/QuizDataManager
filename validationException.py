@@ -43,6 +43,11 @@ class InvalidPictureIdError(ValidationError):
         super().__init__('画像IDは整数値を入力してね！')
 
 
+class AssocLengthError(ValidationError):
+    def __init__(self):
+        super().__init__('連想のヒントは4つまでだよ！')
+
+
 class PanelLengthError(ValidationError):
     def __init__(self):
         super().__init__('パネルの数は8枚か10枚にしてね！')
