@@ -457,8 +457,13 @@ class SearchWindow(tk.Toplevel):
     def __init__(self, master, recorder):
         super().__init__(master)
         self.title('問題検索')
+        self.onMouseWheelTag = str(self)
         self.__recorder = recorder
         self.__createMain()
+
+
+    def __addBindTag(self, widget, tag):
+        widget.bindtags((tag,) + widget.bindtags())
 
 
     def __createMain(self):
@@ -486,18 +491,21 @@ class SearchWindow(tk.Toplevel):
                     justify = tk.LEFT, wraplength = 150)
                 l.grid(row = rowIx, column = columnIx + 1,
                     sticky = tk.W + tk.E + tk.N + tk.S)
+                self.__addBindTag(l, self.onMouseWheelTag)
             if rowIx > 0:
                 quizId = searchResult[rowIx][0]
                 editButton = tk.Button(innerFrame, text = '編集',
                     command = self.__onEditButtonPush(quizId))
                 editButton.grid(row = rowIx, column = 0,
                     sticky = tk.W + tk.E + tk.N + tk.S)
+                self.__addBindTag(editButton, self.onMouseWheelTag)
 
         canvas.create_window(0, 0, anchor = tk.NW, window = innerFrame)
         innerFrame.update_idletasks()
         canvas.config(scrollregion = canvas.bbox("all"))
         self.__bindMouseWheel(canvas)
         canvas.config(width = innerFrame.winfo_width())
+        self.__addBindTag(innerFrame, self.onMouseWheelTag)
 
 
     def __bindMouseWheel(self, canvas):
@@ -517,11 +525,10 @@ class SearchWindow(tk.Toplevel):
 
         OS = platform.system()
         if OS == 'Linux':
-            canvas.bind_all('<Button-4>', onMouseWheel)
-            canvas.bind_all('<Button-5>', onMouseWheel)
+            self.bind_class(self.onMouseWheelTag, '<Button-4>', onMouseWheel)
+            self.bind_class(self.onMouseWheelTag, '<Button-5>', onMouseWheel)
         else:
-            canvas.bind_all('<MouseWheel>', onMouseWheel)
-
+            self.bind_class(self.onMouseWheelTag, '<MouseWheel>', onMouseWheel)
 
 
     def __onEditButtonPush(self, quizId):
@@ -532,3 +539,4 @@ class SearchWindow(tk.Toplevel):
             self.__recorder.edit(quizId)
             self.destroy()
         return onEditButtonPush
+
