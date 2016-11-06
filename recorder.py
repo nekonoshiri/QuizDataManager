@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 from enum import IntEnum
 import tkinter as tk
 
-from tkcommon import AnswerTextFrame, EntryFrame
+from tkcommon import AnswerTextFrame, EntryFrame, QuestionFormatMode
 from tkhelper import ListboxIdd
 from mojiutil import MojiUtil
 from quizdatamanager import RecordMode
@@ -57,6 +57,11 @@ class Recorder(object, metaclass = ABCMeta):
     @property
     @abstractmethod
     def tableName(self): pass
+
+
+    @property
+    def questionFormatMode(self):
+        return QuestionFormatMode.SmashNewLine
 
 
     @abstractmethod
@@ -402,6 +407,11 @@ class RecorderAssoc(Recorder):
     @property
     def tableName(self):
         return 'quiz_assoc'
+
+
+    @property
+    def questionFormatMode(self):
+        return QuestionFormatMode.KeepNewLine
 
 
     def recordationFrame(self):

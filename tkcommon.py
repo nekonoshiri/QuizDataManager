@@ -1,8 +1,16 @@
+from enum import Enum
 import tkinter as tk
 from tkinter.scrolledtext import ScrolledText
 import re
 
 from mojiutil import MojiUtil
+
+
+
+class QuestionFormatMode(Enum):
+    KeepNewLine = 0
+    SmashNewLine = 1
+
 
 
 class QuestionFrame(tk.LabelFrame):
@@ -14,6 +22,7 @@ class QuestionFrame(tk.LabelFrame):
         formatButton = tk.Button(self, text = '整形')
         formatButton['command'] = self.formatQuestion
         formatButton.pack(side = tk.LEFT)
+        self.formatMode = QuestionFormatMode.SmashNewLine
 
 
     @property
@@ -29,8 +38,18 @@ class QuestionFrame(tk.LabelFrame):
 
     def formatQuestion(self):
         question = self.question
+        # まず改行文字で分割
+        questionList = question.split('\n')
         # 文中の空白類文字の削除
-        question = ''.join(question.split())
+        questionList = [''.join(q.split()) for q in questionList]
+        # 空要素の削除
+        questionList = [q for q in questionList if q]
+        # 連結
+        if self.formatMode == QuestionFormatMode.SmashNewLine:
+            question = ''.join(questionList)
+        else:
+            question = '\n'.join(questionList)
+        # ,.?! の置き換え
         transdict = str.maketrans(',，.．!?', '、、。。！？')
         question = question.translate(transdict)
         # 数字１文字は全角，２文字以上は半角

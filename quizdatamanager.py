@@ -298,11 +298,17 @@ class QuizDataManager(tk.Frame):
 
 
     def __createMainNotebook(self):
+        def onNotebookTabChanged(evt):
+            ix = self.__mainNbook.index(self.__mainNbook.select())
+            recorder = self.__recorderList[ix]
+            self.__questionFrame.formatMode = recorder.questionFormatMode
+
         self.__mainNbook = ttk.Notebook(self)
         for recorder in self.__recorderList:
             self.__mainNbook.add(recorder.recordationFrame(),
                 text = recorder.quizName)
         self.__mainNbook.pack()
+        self.__mainNbook.bind('<<NotebookTabChanged>>', onNotebookTabChanged)
 
 
     def __createSupplementalFrame(self):
