@@ -15,8 +15,8 @@ class QuestionFormatMode(Enum):
 
 class QuestionFrame(tk.LabelFrame):
     def __init__(self, master, **option):
+        option.setdefault('text', '問題')
         super().__init__(master, **option)
-        self['text'] = '問題'
         self.questionText = ScrolledText(self, height = 5)
         self.questionText.pack(side = tk.LEFT)
         formatButton = tk.Button(self, text = '整形')
@@ -65,8 +65,8 @@ class QuestionFrame(tk.LabelFrame):
 
 class AnswerTextFrame(tk.LabelFrame):
     def __init__(self, master, **option):
+        option.setdefault('text', '答え（改行区切り）')
         super().__init__(master, **option)
-        self['text'] = '答え（改行区切り）'
         self.answerText = ScrolledText(self, height = 5)
         self.answerText.pack()
 

@@ -1146,7 +1146,8 @@ class RecorderOrder(Recorder):
 
         outerFrame = tk.Frame()
 
-        self._answerFrame = AnswerTextFrame(outerFrame)
+        self._answerFrame = AnswerTextFrame(outerFrame,
+            text = '答え（順番に改行区切り）')
         self._answerFrame.pack()
 
         bottomFrame = tk.LabelFrame(outerFrame, text = '問題タイプ')
@@ -1256,12 +1257,12 @@ class RecorderConnect(Recorder):
 
         topFrame = tk.Frame(outerFrame)
         topFrame.pack()
-        self._optionLeftFrame = AnswerTextFrame(topFrame)
-        self._optionLeftFrame['text'] = '左選択肢'
+        self._optionLeftFrame = AnswerTextFrame(topFrame,
+            text = '左選択肢')
         self._optionLeftFrame.answerText['width'] = 40
         self._optionLeftFrame.pack(side = tk.LEFT)
-        self._optionRightFrame = AnswerTextFrame(topFrame)
-        self._optionRightFrame['text'] = '右選択肢'
+        self._optionRightFrame = AnswerTextFrame(topFrame,
+            text = '右選択肢')
         self._optionRightFrame.answerText['width'] = 40
         self._optionRightFrame.pack(side = tk.LEFT)
 
@@ -1381,11 +1382,10 @@ class RecorderMulti(Recorder):
         topFrame = tk.Frame(outerFrame)
         topFrame.pack()
         self._answerFrame = AnswerTextFrame(topFrame)
-        self._answerFrame['text'] = '答え'
         self._answerFrame.answerText['width'] = 40
         self._answerFrame.pack(side = tk.LEFT)
-        self._dummyFrame = AnswerTextFrame(topFrame)
-        self._dummyFrame['text'] = 'ダミー'
+        self._dummyFrame = AnswerTextFrame(topFrame,
+            text = 'ダミー（改行区切り）')
         self._dummyFrame.answerText['width'] = 40
         self._dummyFrame.pack(side = tk.LEFT)
 
@@ -1505,16 +1505,16 @@ class RecorderGroup(Recorder):
 
         topFrame = tk.Frame(outerFrame)
         topFrame.pack()
-        self._group1Frame = AnswerTextFrame(topFrame)
-        self._group1Frame['text'] = 'グループ１（一行目はグループ名）'
+        self._group1Frame = AnswerTextFrame(topFrame,
+            text = 'グループ１（一行目はグループ名）')
         self._group1Frame.answerText['width'] = 30
         self._group1Frame.pack(side = tk.LEFT)
-        self._group2Frame = AnswerTextFrame(topFrame)
-        self._group2Frame['text'] = 'グループ２（一行目はグループ名）'
+        self._group2Frame = AnswerTextFrame(topFrame,
+            text = 'グループ２（一行目はグループ名）')
         self._group2Frame.answerText['width'] = 30
         self._group2Frame.pack(side = tk.LEFT)
-        self._group3Frame = AnswerTextFrame(topFrame)
-        self._group3Frame['text'] = 'グループ３（一行目はグループ名）'
+        self._group3Frame = AnswerTextFrame(topFrame,
+            text = 'グループ３（一行目はグループ名）')
         self._group3Frame.answerText['width'] = 30
         self._group3Frame.pack(side = tk.LEFT)
 
@@ -1641,11 +1641,10 @@ class RecorderFirstcome(Recorder):
         topFrame = tk.Frame(outerFrame)
         topFrame.pack()
         self._answerFrame = AnswerTextFrame(topFrame)
-        self._answerFrame['text'] = '答え'
         self._answerFrame.answerText['width'] = 40
         self._answerFrame.pack(side = tk.LEFT)
-        self._dummyFrame = AnswerTextFrame(topFrame)
-        self._dummyFrame['text'] = 'ダミー'
+        self._dummyFrame = AnswerTextFrame(topFrame,
+            text = 'ダミー（改行区切り）')
         self._dummyFrame.answerText['width'] = 40
         self._dummyFrame.pack(side = tk.LEFT)
 
