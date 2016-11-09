@@ -340,8 +340,8 @@ class RecorderFour(Recorder):
         ) = self.getQuizData(quizId)
         self._answerEF.setEntryText(answer)
         self._dummy1EF.setEntryText(dummy1)
-        self._dummy1EF.setEntryText(dummy2)
-        self._dummy1EF.setEntryText(dummy3)
+        self._dummy2EF.setEntryText(dummy2)
+        self._dummy3EF.setEntryText(dummy3)
         self.editCommon(quizId, subGenreId, examGenreId,
             difficulty_min, difficulty_max, question,
             comment, stable, seriesId, pictureId)
