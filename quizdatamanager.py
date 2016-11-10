@@ -314,17 +314,11 @@ class QuizDataManager(tk.Frame):
     def __createSupplementalFrame(self):
         def onDifficultyMinCBSelect(evt):
             self.__difficulty_min = self.__difficultyMinCB.selectedId
-            self.__difficultyMaxCB.iddList = [
-                (ix, d) for (ix, d) in difficultyList
-                if self.difficulty_min <= d
-            ]
+            self.__difficultyMaxCB.iddList = difficultyList
 
         def onDifficultyMaxCBSelect(evt):
             self.__difficulty_max = self.__difficultyMaxCB.selectedId
-            self.__difficultyMinCB.iddList = [
-                (ix, d) for (ix, d) in difficultyList
-                if d <= self.difficulty_max
-            ]
+            self.__difficultyMinCB.iddList = difficultyList
 
         difficultyList = [(x, x) for x in range(1, 6)]
 
@@ -437,6 +431,8 @@ class QuizDataManager(tk.Frame):
             raise ve.SeriesIdNoneError
         if not self.question:
             raise ve.QuestionBlankError
+        if self.difficulty_max < self.difficulty_min:
+            raise ve.DifficultyRepugnError
         if self.stable == StableType.Undefined:
             raise ve.StableTypeUndefinedError
 
