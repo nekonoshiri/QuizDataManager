@@ -32,23 +32,27 @@ class QuizDataManager(tk.Frame):
 
 
     def setRecordMode(self, recordMode, quizId = None):
-        if recordMode == RecordMode.Insert:
-            quizId = None
         self.recordMode = (recordMode, quizId)
 
 
     @recordMode.setter
     def recordMode(self, arg):
+        currentTab = self.__mainNbook.select()
         (recordMode, quizId) = arg
         self.__recordMode = recordMode
         if recordMode == RecordMode.Insert:
             self.__master.title('新規登録')
             self.__registerButton['text'] = '登録'
             self.__quizId = None
+            for tab in self.__mainNbook.tabs():
+                self.__mainNbook.tab(tab, state = tk.NORMAL)
         else:
             self.__master.title('編集')
             self.__registerButton['text'] = '上書き編集'
             self.__quizId = quizId
+            for tab in self.__mainNbook.tabs():
+                if tab != currentTab:
+                    self.__mainNbook.tab(tab, state = tk.DISABLED)
 
 
     @property
