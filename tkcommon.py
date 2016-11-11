@@ -17,7 +17,7 @@ class QuestionFrame(tk.LabelFrame):
     def __init__(self, master, **option):
         option.setdefault('text', '問題')
         super().__init__(master, **option)
-        self.questionText = ScrolledText(self, height = 5)
+        self.questionText = ScrolledText(self, height = 5, undo = True)
         self.questionText.pack(side = tk.LEFT)
         formatButton = tk.Button(self, text = '整形')
         formatButton['command'] = self.formatQuestion
@@ -67,7 +67,7 @@ class AnswerTextFrame(tk.LabelFrame):
     def __init__(self, master, **option):
         option.setdefault('text', '答え（改行区切り）')
         super().__init__(master, **option)
-        self.answerText = ScrolledText(self, height = 5)
+        self.answerText = ScrolledText(self, height = 5, undo = True)
         self.answerText.pack()
 
 
