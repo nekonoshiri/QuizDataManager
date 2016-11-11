@@ -3,7 +3,7 @@ from enum import IntEnum
 import tkinter as tk
 
 from tkcommon import AnswerTextFrame, EntryFrame, QuestionFormatMode
-from tkhelper import ListboxIdd
+from tkhelper import ListboxIdd, ComboboxIdd
 from mojiutil import MojiUtil
 from quizdatamanager import RecordMode
 import validationException as ve
@@ -1496,10 +1496,25 @@ class RecorderGroup(Recorder):
         return 'quiz_group'
 
 
+    @property
+    def relativeOpNum(self):
+        return self._relativeOpNum
+
+
+    @relativeOpNum.setter
+    def relativeOpNum(self, relativeOpNum):
+        self._relativeOpNum = relativeOpNum
+        self._relativeOpNumCB.select(relativeOpNum)
+
+
     def recordationFrame(self):
-        def onMultiTypeBoxSelect(evt):
-            (self._multiTypeId, multiTypeStr) = self._multiTypeBox.selectedIdd
-            multiTypeLabel['text'] = multiTypeStr
+        def onRelativeOpNumCBSelect(evt):
+            self._relativeOpNum = self._relativeOpNumCB.selectedId
+
+        relativeOpNumList = [
+            (None, '不明'), (2, '+2'), (1, '+1'),
+            (0, '±0'), (-1, '-1'), (-2, '-2')
+        ]
 
         outerFrame = tk.Frame()
 
@@ -1518,17 +1533,13 @@ class RecorderGroup(Recorder):
         self._group3Frame.answerText['width'] = 30
         self._group3Frame.pack(side = tk.LEFT)
 
-        bottomFrame = tk.LabelFrame(outerFrame, text = '問題タイプ')
+        bottomFrame = tk.LabelFrame(outerFrame,
+            text = '難易度相対選択肢数（選択肢数 - 難易度）')
         bottomFrame.pack()
-        self._multiTypeBox = ListboxIdd(bottomFrame, height = 3)
-        self._multiTypeBox.iddList = self._qdManip.getMultiTypeList()
-        self._multiTypeBox.onSelect = onMultiTypeBoxSelect
-        self._multiTypeBox.pack()
-        multiTypeLabel = tk.Label(bottomFrame, bg = 'LightPink')
-        multiTypeLabel.pack()
-
-        # initialize
-        self._multiTypeBox.select(MultiType.Unknown)
+        self._relativeOpNumCB = ComboboxIdd(bottomFrame, state = 'readonly')
+        self._relativeOpNumCB.iddList = relativeOpNumList
+        self._relativeOpNumCB.onSelect = onRelativeOpNumCBSelect
+        self._relativeOpNumCB.pack()
 
         return outerFrame
 
@@ -1546,13 +1557,15 @@ class RecorderGroup(Recorder):
         columns = [
             'subgenre', 'examgenre',
             'difficulty_min', 'difficulty_max',
-            'question', 'group1', 'group2', 'group3', 'multitype',
+            'question', 'group1', 'group2', 'group3',
+            'relative_option_number',
             'comment', 'stable', 'series', 'picture_id'
         ]
         values = [
             qdm.subGenreId, qdm.examGenreId,
             qdm.difficulty_min, qdm.difficulty_max,
-            qdm.question, group1Str, group2Str, group3Str, self._multiTypeId,
+            qdm.question, group1Str, group2Str, group3Str,
+            self.relativeOpNum,
             qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
         ]
         self.recordCommon(quizId, columns, values)
@@ -1561,13 +1574,13 @@ class RecorderGroup(Recorder):
     def edit(self, quizId):
         qdm = self._qdManager
         (_, subGenreId, examGenreId, difficulty_min, difficulty_max,
-            question, group1, group2, group3, multitype, comment,
+            question, group1, group2, group3, relativeOpNum, comment,
             stable, _, _, _, seriesId, pictureId
         ) = self.getQuizData(quizId)
         self._group1Frame.answer = group1
         self._group2Frame.answer = group2
         self._group3Frame.answer = group3
-        self._multiTypeBox.select(multitype)
+        self.relativeOpNum = relativeOpNum
         self.editCommon(quizId, subGenreId, examGenreId,
             difficulty_min, difficulty_max, question,
             comment, stable, seriesId, pictureId)
@@ -1593,7 +1606,7 @@ class RecorderGroup(Recorder):
         header = [(
             'ID', 'ジャンル', 'サブジャンル', '検定ジャンル',
             '☆下限', '☆上限', '問題',
-            'グループ１', 'グループ２', 'グループ３', '問題タイプ',
+            'グループ１', 'グループ２', 'グループ３', '選択肢数-難易度',
             'コメント', '安定性', 'シリーズ', '画像ID'
         )]
         result = self.selectFromJoinedTable(
@@ -1602,11 +1615,11 @@ class RecorderGroup(Recorder):
                 '{}.id'.format(self.tableName),
                 'genre.genre', 'subgenre.subgenre', 'examgenre.examgenre',
                 'difficulty_min', 'difficulty_max', 'question',
-                'group1', 'group2', 'group3', 'multitype.multitype',
+                'group1', 'group2', 'group3',
+                "ifnull(relative_option_number, '不明')",
                 'comment', 'stable.stable', 'series.series', 'picture_id'
             ],
-            cond,
-            multiType = True
+            cond
         )
         return header + result
 
@@ -1615,7 +1628,7 @@ class RecorderGroup(Recorder):
         self._group1Frame.answer = ''
         self._group2Frame.answer = ''
         self._group3Frame.answer = ''
-        self._multiTypeBox.select(MultiType.Unknown)
+        self.relativeOpNum = None
 
 
 

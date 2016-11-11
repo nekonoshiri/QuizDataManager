@@ -318,11 +318,9 @@ class QuizDataManager(tk.Frame):
     def __createSupplementalFrame(self):
         def onDifficultyMinCBSelect(evt):
             self.__difficulty_min = self.__difficultyMinCB.selectedId
-            self.__difficultyMaxCB.iddList = difficultyList
 
         def onDifficultyMaxCBSelect(evt):
             self.__difficulty_max = self.__difficultyMaxCB.selectedId
-            self.__difficultyMinCB.iddList = difficultyList
 
         difficultyList = [(x, x) for x in range(1, 6)]
 
