@@ -371,7 +371,7 @@ class RecorderFour(Recorder):
         header = [(
             'ID', 'ジャンル', 'サブジャンル', '検定ジャンル',
             '☆下限', '☆上限', '問題',
-            '答え', 'ダミー１', 'ダミー２', 'ダミー３',
+            '答え', 'ダミー',
             'コメント', '安定性', 'シリーズ', '画像ID'
         )]
         result = self.selectFromJoinedTable(
@@ -380,7 +380,7 @@ class RecorderFour(Recorder):
                 '{}.id'.format(self.tableName),
                 'genre.genre', 'subgenre.subgenre', 'examgenre.examgenre',
                 'difficulty_min', 'difficulty_max', 'question',
-                'answer', 'dummy1', 'dummy2', 'dummy3',
+                'answer', '(dummy1 || "\n" || dummy2 || "\n" || dummy3)',
                 'comment', 'stable.stable', 'series.series', 'picture_id'
             ],
             cond
@@ -516,7 +516,7 @@ class RecorderAssoc(Recorder):
         header = [(
             'ID', 'ジャンル', 'サブジャンル', '検定ジャンル',
             '☆下限', '☆上限',
-            '問題', '答え', 'ダミー１', 'ダミー２', 'ダミー３',
+            '問題', '答え', 'ダミー',
             '連想タイプ',
             'コメント', '安定性', 'シリーズ', '画像ID'
         )]
@@ -526,7 +526,8 @@ class RecorderAssoc(Recorder):
                 '{}.id'.format(self.tableName),
                 'genre.genre', 'subgenre.subgenre', 'examgenre.examgenre',
                 'difficulty_min', 'difficulty_max',
-                'question', 'answer', 'dummy1', 'dummy2', 'dummy3',
+                'question', 'answer',
+                '(dummy1 || "\n" || dummy2 || "\n" || dummy3)',
                 'assoctype.assoctype',
                 'comment', 'stable.stable', 'series.series', 'picture_id'
             ],
@@ -832,7 +833,7 @@ class RecorderSlot(Recorder):
         header = [(
             'ID', 'ジャンル', 'サブジャンル', '検定ジャンル',
             '☆下限', '☆上限', '問題',
-            '答え', 'ダミー１', 'ダミー２', 'ダミー３',
+            '答え', 'ダミー',
             'コメント', '安定性', 'シリーズ', '画像ID'
         )]
         result = self.selectFromJoinedTable(
@@ -841,7 +842,7 @@ class RecorderSlot(Recorder):
                 '{}.id'.format(self.tableName),
                 'genre.genre', 'subgenre.subgenre', 'examgenre.examgenre',
                 'difficulty_min', 'difficulty_max', 'question',
-                'answer', 'dummy1', 'dummy2', 'dummy3',
+                'answer', '(dummy1 || "\n" || dummy2 || "\n" || dummy3)',
                 'comment', 'stable.stable', 'series.series', 'picture_id'
             ],
             cond
