@@ -2,3 +2,4 @@ __pycache__
 image
 *.sqlite3
 *.swp
+icon.*

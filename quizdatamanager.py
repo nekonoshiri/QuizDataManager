@@ -198,10 +198,19 @@ class QuizDataManager(tk.Frame):
     def __init__(self, master, qdManip):
         super().__init__(master)
         self._member(master, qdManip)
+        self.__setIcon(master)
         self.__makeRecorderList()
         self.__createWidgets()
         self.setRecordMode(RecordMode.Insert)
         self.pack()
+
+
+    def __setIcon(self, master):
+        try:
+            img = tk.Image('photo', file = 'icon.gif')
+            master.tk.call('wm', 'iconphoto', master._w, img)
+        except tk.TclError:
+            pass
 
 
     def __makeRecorderList(self):
