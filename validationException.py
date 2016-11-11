@@ -82,3 +82,7 @@ class TypingTypeInconsistError(ValidationError):
     def __init__(self):
         super().__init__('答えはひらがな・カタカナ・英数字で統一してね！')
 
+
+class AnswerStringSetInconsistError(ValidationError):
+    def __init__(self):
+        super().__init__('各答えは全て同じ文字セットから作成してね！')

@@ -6,6 +6,7 @@ from tkcommon import AnswerTextFrame, EntryFrame, QuestionFormatMode
 from tkhelper import ListboxIdd, ComboboxIdd
 from mojiutil import MojiUtil
 from quizdatamanager import RecordMode
+from util import allSame
 import validationException as ve
 
 
@@ -132,14 +133,12 @@ class Recorder(object, metaclass = ABCMeta):
         answerList = [str.upper(MojiUtil.toHankaku(ans)) for ans in rowAnswerList]
         if not answerList:
             raise ve.AnswerBlankError
-        typingType = getTypingType(answerList[0])
         for answer in answerList:
             if len(answer) > 8:
                 raise ve.AnswerLengthOverError
-            newTypingType = getTypingType(answer)
-            if typingType != newTypingType:
-                raise ve.TypingTypeInconsistError
-            typingType = newTypingType
+        if not allSame(answerList, lambda answer: getTypingType(answer)):
+            raise ve.TypingTypeInconsistError
+        typingType = getTypingType(answerList[0])
 
         answerStr = '\n'.join(answerList)
         return (typingType, answerStr)
@@ -659,12 +658,9 @@ class RecorderPanel(Recorder):
         answerList = self._answerFrame.answer
         if not answerList:
             raise ve.AnswerBlankError
+        if not allSame(answerList, lambda ans: len(ans)):
+            raise ve.PanelLengthInconsistError
         answerLen = len(answerList[0])
-        for answer in answerList:
-            newAnswerLen = len(answer)
-            if answerLen != newAnswerLen:
-                raise ve.PanelLengthInconsistError
-            answerLen = newAnswerLen
 
         panel = self._panelEF.getEntryText()
         if not len(panel) in (8, 10):
@@ -775,7 +771,7 @@ class RecorderSlot(Recorder):
         dummy3 = self._dummy3EF.getEntryText()
         if not all((answer, dummy1, dummy2, dummy3)):
             raise ve.AnswerBlankError
-        if not (len(answer) == len(dummy1) == len(dummy2) == len(dummy3)):
+        if not allSame((answer, dummy1, dummy2, dummy3), lambda x: len(x)):
             raise ve.SlotStrLenError
         columns = [
             'subgenre', 'examgenre',
@@ -958,15 +954,17 @@ class RecorderCube(Recorder):
 
     def recordationFrame(self):
         outerFrame = tk.Frame()
-        self._answerEF = EntryFrame(outerFrame, text = '答え')
-        self._answerEF.pack()
+        self._answerFrame = AnswerTextFrame(outerFrame)
+        self._answerFrame.pack()
         return outerFrame
 
 
     def record(self, quizId = None):
         qdm = self._qdManager
-        rowAnswerList = [self._answerEF.getEntryText()]
+        rowAnswerList = self._answerFrame.answer
         (typingtype, answer) = self.getTypingTypeAndAnswer(rowAnswerList)
+        if not allSame(answer.split('\n'), lambda s: sorted(list(s))):
+            raise ve.AnswerStringSetInconsistError
         columns = [
             'subgenre', 'examgenre',
             'difficulty_min', 'difficulty_max',
@@ -988,7 +986,7 @@ class RecorderCube(Recorder):
             question, _, answer, comment,
             stable, _, _, _, seriesId, pictureId
         ) = self.getQuizData(quizId)
-        self._answerEF.setEntryText(answer)
+        self._answerFrame.answer = answer
         self.editCommon(quizId, subGenreId, examGenreId,
             difficulty_min, difficulty_max, question,
             comment, stable, seriesId, pictureId)
@@ -996,14 +994,15 @@ class RecorderCube(Recorder):
 
     def search(self):
         questionHead = self._qdManager.question[:6]
-        rowAnswer = self._answerEF.getEntryText()
-        answer = str.upper(MojiUtil.toHankaku(rowAnswer))
+        rowAnswerList = self._answerFrame.answer
+        answerList = [str.upper(MojiUtil.toHankaku(ans)) for ans in rowAnswerList]
 
         condList = []
         if questionHead:
             condList.append("question like '%{}%'".format(questionHead))
-        if answer:
-            condList.append("answer = '{}'".format(answer))
+        if answerList:
+            for answer in answerList:
+                condList.append("answer like '%{}%'".format(answer))
         cond = ' or '.join(condList) if condList else ''
 
         header = [(
@@ -1026,7 +1025,7 @@ class RecorderCube(Recorder):
 
 
     def cleanUp(self):
-        self._answerEF.deleteEntryText()
+        self._answerFrame.answer = ''
 
 
 

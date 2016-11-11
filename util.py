@@ -28,3 +28,17 @@ def findIndices(pred, itr):
             ixList.append(ix)
         ix += 1
     return ixList
+
+
+def allSame(itr, f = lambda x: x):
+    class Nothing(object):
+        pass
+    prevItem = Nothing()
+    for rowItem in itr:
+        item = f(rowItem)
+        if prevItem == item or isinstance(prevItem, Nothing):
+            prevItem = item
+        else:
+            return False
+    return True
+
