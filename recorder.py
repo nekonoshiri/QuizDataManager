@@ -559,16 +559,19 @@ class RecorderSort(Recorder):
 
     def recordationFrame(self):
         outerFrame = tk.Frame()
-        self._answerEF = EntryFrame(outerFrame, text = '答え')
-        self._answerEF.pack()
+        self._answerFrame = AnswerTextFrame(outerFrame)
+        self._answerFrame.pack()
         return outerFrame
 
 
     def record(self, quizId = None):
         qdm = self._qdManager
-        answer = self._answerEF.getEntryText()
-        if not answer:
+        answerList = self._answerFrame.answer
+        if not answerList:
             raise ve.AnswerBlankError
+        if not allSame(answerList, lambda s: sorted(list(s))):
+            raise ve.AnswerStringSetInconsistError
+        answer = '\n'.join(answerList)
         columns = [
             'subgenre', 'examgenre',
             'difficulty_min', 'difficulty_max',
@@ -590,7 +593,7 @@ class RecorderSort(Recorder):
             question, answer, comment,
             stable, _, _, _, seriesId, pictureId
         ) = self.getQuizData(quizId)
-        self._answerEF.setEntryText(answer)
+        self._answerFrame.answer = answer
         self.editCommon(quizId, subGenreId, examGenreId,
             difficulty_min, difficulty_max, question,
             comment, stable, seriesId, pictureId)
@@ -598,13 +601,14 @@ class RecorderSort(Recorder):
 
     def search(self):
         questionHead = self._qdManager.question[:6]
-        answer = self._answerEF.getEntryText()
+        answerList = self._answerFrame.answer
 
         condList = []
         if questionHead:
             condList.append("question like '%{}%'".format(questionHead))
-        if answer:
-            condList.append("answer = '{}'".format(answer))
+        if answerList:
+            for answer in answerList:
+                condList.append("answer like '%{}%'".format(answer))
         cond = ' or '.join(condList) if condList else ''
 
         header = [(
@@ -627,7 +631,7 @@ class RecorderSort(Recorder):
 
 
     def cleanUp(self):
-        self._answerEF.deleteEntryText()
+        self._answerFrame.answer = ''
 
 
 
