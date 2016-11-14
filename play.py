@@ -1,3 +1,4 @@
+from abc import ABCMeta, abstractmethod
 import random
 import tkinter as tk
 from tkinter import messagebox
@@ -34,6 +35,7 @@ class QuizQuestionFrame(tk.Frame):
         self.interval = option.pop('interval', 30)
         self._position = 0
         self._textVar = tk.StringVar()
+        self._afterIdList = []
         super().__init__(master, **option)
         tk.Label(self, width = 24, height = 10,
             anchor = tk.NW, justify = tk.LEFT, bg = 'pale green',
@@ -53,6 +55,17 @@ class QuizQuestionFrame(tk.Frame):
         self.position = len(self.text)
 
 
+    def after(self, msec, command = lambda: None):
+        afterId = super().after(msec, command)
+        self._afterIdList.append(afterId)
+
+
+    def afterAllCancel(self):
+        for afterId in self._afterIdList:
+            self.after_cancel(afterId)
+        self._afterIdList = []
+
+
     def startQuestion(self):
         def posIncLoop():
             self.posInc()
@@ -61,6 +74,35 @@ class QuizQuestionFrame(tk.Frame):
             self.after(self.interval, posIncLoop)
 
         self.posReset()
+        self.afterAllCancel()
+        posIncLoop()
+
+
+
+class QuizQuestionFrameAssoc(QuizQuestionFrame):
+    def __init__(self, master, **option):
+        self.intervalAssoc = option.pop('interval', 3000)
+        self.intervalAssocLast = option.pop('interval', 4000)
+        super().__init__(master, **option)
+
+
+    def startQuestion(self):
+        def posIncLoop():
+            self.posInc()
+            if self.position > len(self.text):
+                return
+            if self._textVar.get()[-1] == '\n':
+                if self._lineCount < 2:
+                    self.after(self.intervalAssoc, posIncLoop)
+                    self._lineCount += 1
+                else:
+                    self.after(self.intervalAssocLast, posIncLoop)
+            else:
+                self.after(self.interval, posIncLoop)
+
+        self.posReset()
+        self.afterAllCancel()
+        self._lineCount = 0
         posIncLoop()
 
 
@@ -171,67 +213,42 @@ class QuizButtonRectFourFrame(tk.Frame):
 
 
 
-class PlayMain(tk.Frame):
+class PlayFrame(tk.Frame, metaclass = ABCMeta):
     def _member(self, master, qdManip):
         self._master = master
         self._qdManip = qdManip
         self._questionCount = 0
         self._correctCount = 0
         self._comment = ''
-        self._quizList = self._qdManip.select(
-            ['question', 'answer', 'dummy1', 'dummy2', 'dummy3', 'comment'],
-            'quiz_four'
-        )
-        random.shuffle(self._quizList)
 
 
     def __init__(self, master, qdManip):
         super().__init__(master)
         self._member(master, qdManip)
+        self._fetchQuizList()
         self._createQuestionFrame()
         self._createButtonFrame()
         self.pack()
         self._setNextQuestion()
 
 
+    @abstractmethod
+    def _fetchQuizList(self):
+        pass
+
+
+    @abstractmethod
     def _createQuestionFrame(self):
-        self.questionFrame = QuizQuestionFrame(self)
-        self.questionFrame.pack()
+        pass
 
 
+    @abstractmethod
     def _createButtonFrame(self):
-        def buttonCommand(ansB):
-            self._questionCount += 1
-            self._answerShowMsgBox(ansB.value)
+        pass
 
-            self._setNextQuestion()
-
-        self.buttonFrame =  QuizButtonRectFourFrame(self)
-        self.buttonFrame.setButtonCommand(buttonCommand)
-        self.buttonFrame.pack()
-
-
-    def _answerShowMsgBox(self, value):
-        if value:
-            self._correctCount += 1
-            messagebox.showinfo('正解！',
-                '正解だよ！\n\n{}'.format(self._comment))
-        else:
-            messagebox.showerror('はずれ！',
-                '間違いだよ！\n\n{}'.format(self._comment))
-
-
-
+    @abstractmethod
     def _setNextQuestion(self):
-        if not self._quizList:
-            self._finish()
-            return
-        (question, answer,
-            dummy1, dummy2, dummy3, comment) = self._quizList.pop()
-        self.questionFrame.text = question
-        self._comment = comment
-        self.buttonFrame.setOptionRandomly(answer, dummy1, dummy2, dummy3)
-        self.questionFrame.startQuestion()
+        pass
 
 
     def _finish(self):
@@ -241,9 +258,136 @@ class PlayMain(tk.Frame):
         self._master.destroy()
 
 
+
+class PlayFour(PlayFrame):
+    def _fetchQuizList(self):
+        self._quizList = self._qdManip.select(
+            ['question', 'answer', 'dummy1', 'dummy2', 'dummy3', 'comment'],
+            'quiz_four'
+        )
+        random.shuffle(self._quizList)
+
+
+    def _createQuestionFrame(self):
+        self._questionFrame = QuizQuestionFrame(self)
+        self._questionFrame.pack()
+
+
+    def _createButtonFrame(self):
+        def buttonCommand(ansB):
+            self._questionCount += 1
+            self._questionFrame.posEnd()
+            self._answerShowMsgBox(ansB.value)
+            self._setNextQuestion()
+
+        self._buttonFrame =  QuizButtonRectFourFrame(self)
+        self._buttonFrame.setButtonCommand(buttonCommand)
+        self._buttonFrame.pack()
+
+
+    def _answerShowMsgBox(self, value):
+        if value:
+            self._correctCount += 1
+            messagebox.showinfo('正解！',
+                '正解だよ！\n\n{}'.format(self._comment))
+        else:
+            messagebox.showerror('はずれ！',
+                '間違いだよ！\n答え：{}\n\n{}'.format(self._answer,
+                self._comment))
+
+
+    def _setNextQuestion(self):
+        if not self._quizList:
+            self._finish()
+            return
+        (question, answer,
+            dummy1, dummy2, dummy3, comment) = self._quizList.pop()
+        self._questionFrame.text = question
+        self._answer = answer
+        self._comment = comment
+        self._buttonFrame.setOptionRandomly(answer, dummy1, dummy2, dummy3)
+        self._questionFrame.startQuestion()
+
+
+
+class PlayAssoc(PlayFrame):
+    def _fetchQuizList(self):
+        self._quizList = self._qdManip.select(
+            ['question', 'answer', 'dummy1', 'dummy2', 'dummy3', 'comment'],
+            'quiz_assoc'
+        )
+        random.shuffle(self._quizList)
+
+
+    def _createQuestionFrame(self):
+        self._questionFrame = QuizQuestionFrameAssoc(self)
+        self._questionFrame.pack()
+
+
+    def _createButtonFrame(self):
+        def buttonCommand(ansB):
+            self._questionCount += 1
+            self._questionFrame.posEnd()
+            self._answerShowMsgBox(ansB.value)
+            self._setNextQuestion()
+
+        self._buttonFrame =  QuizButtonRectFourFrame(self)
+        self._buttonFrame.setButtonCommand(buttonCommand)
+        self._buttonFrame.pack()
+
+
+    def _answerShowMsgBox(self, value):
+        if value:
+            self._correctCount += 1
+            messagebox.showinfo('正解！',
+                '正解だよ！\n\n{}'.format(self._comment))
+        else:
+            messagebox.showerror('はずれ！',
+                '間違いだよ！\n答え：{}\n\n{}'.format(self._answer,
+                self._comment))
+
+
+    def _setNextQuestion(self):
+        if not self._quizList:
+            self._finish()
+            return
+        (question, answer,
+            dummy1, dummy2, dummy3, comment) = self._quizList.pop()
+        self._questionFrame.text = question
+        self._answer = answer
+        self._comment = comment
+        self._buttonFrame.setOptionRandomly(answer, dummy1, dummy2, dummy3)
+        self._questionFrame.startQuestion()
+
+
+
+class SelectWindow(tk.Frame):
+    def __init__(self, master, qdManip):
+        super().__init__(master)
+        self._master = master
+        self._qdManip = qdManip
+        self._createMainWindow()
+        self.pack()
+
+
+    def _createMainWindow(self):
+        def onClick(P):
+            self.destroy()
+            app = P(self._master, self._qdManip)
+            app.mainloop()
+
+        tk.Label(self, text = 'クイズ形式を選んでね！').pack()
+        tk.Button(self, text = '四択',
+            command = lambda: onClick(PlayFour)).pack()
+        tk.Button(self, text = '連想',
+            command = lambda: onClick(PlayAssoc)).pack()
+
+
+
 if __name__ == '__main__':
     qdManip = QuestionDataDBManip('question_data.sqlite3')
     root = tk.Tk()
-    app = PlayMain(root, qdManip)
-    app.mainloop()
+    selectWindow = SelectWindow(root, qdManip)
+    selectWindow.mainloop()
     qdManip.close()
+
