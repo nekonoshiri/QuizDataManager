@@ -41,7 +41,7 @@ class QuizQuestionFrame(tk.Frame):
 
     def __init__(self, master, **option):
         self._text = option.pop('text', '')
-        self._interval = option.pop('interval', 100)
+        self._interval = option.pop('interval', 30)
         self._position = 0
         self._textVar = tk.StringVar()
         super().__init__(master, **option)
@@ -64,10 +64,14 @@ class QuizQuestionFrame(tk.Frame):
 
 
     def startQuestion(self):
-        self.posEnd()
-        # for i in range(len(self.text)):
-        #     self.posInc()
-        #     self.after(self.interval)
+        def posIncLoop():
+            self.posInc()
+            if self.position > len(self.text):
+                return
+            self.after(self.interval, posIncLoop)
+
+        self.posReset()
+        posIncLoop()
 
 
 
