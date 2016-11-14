@@ -90,10 +90,12 @@ insert into series values(5, 'QMA5');
 insert into series values(6, 'QMA6');
 insert into series values(7, 'QMA7');
 insert into series values(8, 'QMA8');
-insert into series values(9, 'QMA賢者の扉');
-insert into series values(10, 'QMA天の学舎');
-insert into series values(11, 'QMA暁の鐘');
-insert into series values(12, 'QMAトーキョーグリモワール');
+insert into series values(9, 'QMADS1');
+insert into series values(10, 'QMADS2');
+insert into series values(11, 'QMA賢者の扉');
+insert into series values(12, 'QMA天の学舎');
+insert into series values(13, 'QMA暁の鐘');
+insert into series values(14, 'QMAトーキョーグリモワール');
 insert into stable values(0, '不安定');
 insert into stable values(1, '安定');
     """)
