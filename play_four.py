@@ -29,19 +29,9 @@ class QuizQuestionFrame(tk.Frame):
         self._text = text
 
 
-    @property
-    def interval(self):
-        return self._interval
-
-
-    @interval.setter
-    def interval(self, interval):
-        self._interval = interval
-
-
     def __init__(self, master, **option):
         self._text = option.pop('text', '')
-        self._interval = option.pop('interval', 30)
+        self.interval = option.pop('interval', 30)
         self._position = 0
         self._textVar = tk.StringVar()
         super().__init__(master, **option)
