@@ -496,7 +496,7 @@ class SearchWindow(tk.Toplevel):
         for (rowIx, rowItem) in enumerate(searchResult):
             for (columnIx, columnItem) in enumerate(rowItem):
                 l = tk.Label(innerFrame, text = columnItem, relief = tk.RIDGE,
-                    justify = tk.LEFT, wraplength = 150)
+                    justify = tk.LEFT, wraplength = 130)
                 l.grid(row = rowIx, column = columnIx + 1,
                     sticky = tk.W + tk.E + tk.N + tk.S)
                 self.__addBindTag(l, self.onMouseWheelTag)
