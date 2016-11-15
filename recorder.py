@@ -1513,8 +1513,11 @@ class RecorderGroup(Recorder):
 
     @property
     def relativeId(self):
+        relativeId = self._relativeIdEF.getEntryText()
+        if not relativeId:
+            return None
         try:
-            return int(self._relativeIdEF.getEntryText())
+            return int(relativeId)
         except ValueError:
             raise ve.InvalidRelativeIdError
 
@@ -1574,7 +1577,7 @@ class RecorderGroup(Recorder):
         group1List = self._group1Frame.answer
         group2List = self._group2Frame.answer
         group3List = self._group3Frame.answer
-        if (group1List, group2List, group3List).count([]) >= 2:
+        if (group1List, group2List, group3List).count([]) >= 3:
             raise ve.AnswerBlankError
         group1Str = '\n'.join(group1List)
         group2Str = '\n'.join(group2List)
