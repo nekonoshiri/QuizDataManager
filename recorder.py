@@ -1511,6 +1511,22 @@ class RecorderGroup(Recorder):
         self._relativeOpNumCB.select(relativeOpNum)
 
 
+    @property
+    def relativeId(self):
+        try:
+            return int(self._relativeIdEF.getEntryText())
+        except ValueError:
+            raise ve.InvalidRelativeIdError
+
+
+    @relativeId.setter
+    def relativeId(self, relativeId):
+        if relativeId is None:
+            self._relativeIdEF.deleteEntryText()
+        else:
+            self._relativeIdEF.setEntryText(str(relativeId))
+
+
     def recordationFrame(self):
         def onRelativeOpNumCBSelect(evt):
             self._relativeOpNum = self._relativeOpNumCB.selectedId
@@ -1544,6 +1560,11 @@ class RecorderGroup(Recorder):
         self._relativeOpNumCB.iddList = relativeOpNumList
         self._relativeOpNumCB.onSelect = onRelativeOpNumCBSelect
         self._relativeOpNumCB.pack()
+        self.relativeOpNum = None
+
+        self._relativeIdEF = EntryFrame(outerFrame,
+            text = '関連問題ID（グループが４つ以上ある場合）')
+        self._relativeIdEF.pack()
 
         return outerFrame
 
@@ -1563,14 +1584,16 @@ class RecorderGroup(Recorder):
             'difficulty_min', 'difficulty_max',
             'question', 'group1', 'group2', 'group3',
             'relative_option_number',
-            'comment', 'stable', 'series', 'picture_id'
+            'comment', 'stable', 'series', 'picture_id',
+            'relative_id'
         ]
         values = [
             qdm.subGenreId, qdm.examGenreId,
             qdm.difficulty_min, qdm.difficulty_max,
             qdm.question, group1Str, group2Str, group3Str,
             self.relativeOpNum,
-            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
+            qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId,
+            self.relativeId
         ]
         self.recordCommon(quizId, columns, values)
 
@@ -1579,12 +1602,13 @@ class RecorderGroup(Recorder):
         qdm = self._qdManager
         (_, subGenreId, examGenreId, difficulty_min, difficulty_max,
             question, group1, group2, group3, relativeOpNum, comment,
-            stable, _, _, _, seriesId, pictureId
+            stable, _, _, _, seriesId, pictureId, relativeId
         ) = self.getQuizData(quizId)
         self._group1Frame.answer = group1
         self._group2Frame.answer = group2
         self._group3Frame.answer = group3
         self.relativeOpNum = relativeOpNum
+        self.relativeId = relativeId
         self.editCommon(quizId, subGenreId, examGenreId,
             difficulty_min, difficulty_max, question,
             comment, stable, seriesId, pictureId)
@@ -1611,7 +1635,7 @@ class RecorderGroup(Recorder):
             'ID', 'ジャンル', 'サブジャンル', '検定ジャンル',
             '☆下限', '☆上限', '問題',
             'グループ１', 'グループ２', 'グループ３', '選択肢数-難易度',
-            'コメント', '安定性', 'シリーズ', '画像ID'
+            'コメント', '安定性', 'シリーズ', '画像ID', '関連問題ID'
         )]
         result = self.selectFromJoinedTable(
             self.tableName,
@@ -1621,7 +1645,8 @@ class RecorderGroup(Recorder):
                 'difficulty_min', 'difficulty_max', 'question',
                 'group1', 'group2', 'group3',
                 "ifnull(relative_option_number, '不明')",
-                'comment', 'stable.stable', 'series.series', 'picture_id'
+                'comment', 'stable.stable', 'series.series', 'picture_id',
+                'relative_id'
             ],
             cond
         )
@@ -1633,6 +1658,7 @@ class RecorderGroup(Recorder):
         self._group2Frame.answer = ''
         self._group3Frame.answer = ''
         self.relativeOpNum = None
+        self.relativeId = None
 
 
 
