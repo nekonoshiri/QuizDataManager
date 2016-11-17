@@ -1618,7 +1618,7 @@ class RecorderGroup(Recorder):
 
 
     def search(self):
-        questionHead = self._qdManager.question[:6]
+        questionHead = self._qdManager.question[:7]
         group1List = self._group1Frame.answer
         group2List = self._group2Frame.answer
         group3List = self._group3Frame.answer
