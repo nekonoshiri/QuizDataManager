@@ -286,7 +286,8 @@ class RomanKanaTable(object):
     )
 
     xk_lk = (
-        (),
+        (('lka', None, 'ヵ'), ('xka', None, 'ヵ'),
+            ('lke', None, 'ヶ'), ('xke', None, 'ヶ')),
         (('lka', 'ヵ', 'ヵ'), ('xka', 'ヵ', 'ヵ'),
             ('lke', 'ヶ', 'ヶ'), ('xke', 'ヶ', 'ヶ')),
         (('lka', 'ゕ', 'ヵ'), ('xka', 'ゕ', 'ヵ'),
@@ -294,7 +295,18 @@ class RomanKanaTable(object):
     )
 
     v_vy = (
-        (),
+        (
+            ('va', None, 'ヴァ'),
+            ('vi', None, 'ヴィ'),
+            ('vu', None, 'ヴ'),
+            ('ve', None, 'ヴェ'),
+            ('vo', None, 'ヴォ'),
+            ('vya', None, 'ヴャ'),
+            ('vyi', None, 'ヴィ'),
+            ('vyu', None, 'ヴュ'),
+            ('vye', None, 'ヴェ'),
+            ('vyo', None, 'ヴョ')
+        ),
         (
             ('va', 'ヴぁ', 'ヴァ'),
             ('vi', 'ヴぃ', 'ヴィ'),
