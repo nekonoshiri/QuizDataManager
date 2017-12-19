@@ -43,11 +43,6 @@ class InvalidPictureIdError(ValidationError):
         super().__init__('画像IDは整数値を入力してね！')
 
 
-class InvalidRelativeIdError(ValidationError):
-    def __init__(self):
-        super().__init__('関連問題IDは整数値を入力してね！')
-
-
 class DifficultyRepugnError(ValidationError):
     def __init__(self):
         super().__init__('難易度の最小値が最大値より大きくなっているよ！')
