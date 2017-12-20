@@ -1583,7 +1583,7 @@ class RecorderGroup(Recorder):
         (_, subGenreId, examGenreId, difficulty_min, difficulty_max,
             question, group1, group2, group3, group4,
             relativeOpNum, comment,
-            stable, _, _, _, seriesId, pictureId, _
+            stable, _, _, _, seriesId, pictureId
         ) = self.getQuizData(quizId)
         self._group1Frame.answer = group1
         self._group2Frame.answer = group2
