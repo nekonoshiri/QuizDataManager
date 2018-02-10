@@ -1565,6 +1565,8 @@ class RecorderGroup(Recorder):
         group2List = self._group2Frame.answer
         group3List = self._group3Frame.answer
         group4List = self._group4Frame.answer
+        group5List = self._group5Frame.answer
+        group6List = self._group6Frame.answer
         if (group1List, group2List, group3List,
             group4List, group5List, group6List).count([]) >= 6:
             raise ve.AnswerBlankError
