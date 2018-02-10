@@ -1522,20 +1522,30 @@ class RecorderGroup(Recorder):
 
         outerFrame = tk.Frame()
 
-        topFrame = tk.Frame(outerFrame)
-        topFrame.pack()
-        self._group1Frame = AnswerTextFrame(topFrame, text = 'グループ１')
+        topFrame1 = tk.Frame(outerFrame)
+        topFrame1.pack()
+
+        topFrame2 = tk.Frame(outerFrame)
+        topFrame2.pack()
+
+        self._group1Frame = AnswerTextFrame(topFrame1, text = 'グループ１')
         self._group1Frame.answerText['width'] = 23
         self._group1Frame.pack(side = tk.LEFT)
-        self._group2Frame = AnswerTextFrame(topFrame, text = 'グループ２')
+        self._group2Frame = AnswerTextFrame(topFrame1, text = 'グループ２')
         self._group2Frame.answerText['width'] = 23
         self._group2Frame.pack(side = tk.LEFT)
-        self._group3Frame = AnswerTextFrame(topFrame, text = 'グループ３')
+        self._group3Frame = AnswerTextFrame(topFrame1, text = 'グループ３')
         self._group3Frame.answerText['width'] = 23
         self._group3Frame.pack(side = tk.LEFT)
-        self._group4Frame = AnswerTextFrame(topFrame, text = 'グループ４')
+        self._group4Frame = AnswerTextFrame(topFrame2, text = 'グループ４')
         self._group4Frame.answerText['width'] = 23
         self._group4Frame.pack(side = tk.LEFT)
+        self._group5Frame = AnswerTextFrame(topFrame2, text = 'グループ５')
+        self._group5Frame.answerText['width'] = 23
+        self._group5Frame.pack(side = tk.LEFT)
+        self._group6Frame = AnswerTextFrame(topFrame2, text = 'グループ６')
+        self._group6Frame.answerText['width'] = 23
+        self._group6Frame.pack(side = tk.LEFT)
 
         bottomFrame = tk.LabelFrame(outerFrame,
             text = '難易度相対選択肢数（選択肢数 - 難易度）')
@@ -1555,23 +1565,28 @@ class RecorderGroup(Recorder):
         group2List = self._group2Frame.answer
         group3List = self._group3Frame.answer
         group4List = self._group4Frame.answer
-        if (group1List, group2List, group3List, group4List).count([]) >= 4:
+        if (group1List, group2List, group3List,
+            group4List, group5List, group6List).count([]) >= 6:
             raise ve.AnswerBlankError
         group1Str = '\n'.join(group1List)
         group2Str = '\n'.join(group2List)
         group3Str = '\n'.join(group3List)
         group4Str = '\n'.join(group4List)
+        group5Str = '\n'.join(group5List)
+        group6Str = '\n'.join(group6List)
         columns = [
             'subgenre', 'examgenre',
             'difficulty_min', 'difficulty_max',
-            'question', 'group1', 'group2', 'group3', 'group4',
+            'question', 'group1', 'group2', 'group3',
+            'group4', 'group5', 'group6',
             'relative_option_number',
             'comment', 'stable', 'series', 'picture_id'
         ]
         values = [
             qdm.subGenreId, qdm.examGenreId,
             qdm.difficulty_min, qdm.difficulty_max,
-            qdm.question, group1Str, group2Str, group3Str, group4Str,
+            qdm.question, group1Str, group2Str, group3Str,
+            group4Str, group5Str, group6Str,
             self.relativeOpNum,
             qdm.comment, qdm.stable, qdm.seriesId, qdm.pictureId
         ]
@@ -1581,7 +1596,7 @@ class RecorderGroup(Recorder):
     def edit(self, quizId):
         qdm = self._qdManager
         (_, subGenreId, examGenreId, difficulty_min, difficulty_max,
-            question, group1, group2, group3, group4,
+            question, group1, group2, group3, group4, group5, group6,
             relativeOpNum, comment,
             stable, _, _, _, seriesId, pictureId
         ) = self.getQuizData(quizId)
@@ -1589,6 +1604,8 @@ class RecorderGroup(Recorder):
         self._group2Frame.answer = group2
         self._group3Frame.answer = group3
         self._group4Frame.answer = group4
+        self._group5Frame.answer = group5
+        self._group6Frame.answer = group6
         self.relativeOpNum = relativeOpNum
         self.editCommon(quizId, subGenreId, examGenreId,
             difficulty_min, difficulty_max, question,
@@ -1601,14 +1618,18 @@ class RecorderGroup(Recorder):
         group2List = self._group2Frame.answer
         group3List = self._group3Frame.answer
         group4List = self._group4Frame.answer
+        group5List = self._group5Frame.answer
+        group6List = self._group6Frame.answer
         condList = []
         if questionHead:
             condList.append("question like '%{}%'".format(questionHead))
-        for groupList in (group1List, group2List, group3List, group4List):
+        for groupList in (group1List, group2List, group3List,
+                          group4List, group5List, group6List):
             if not groupList:
                 continue
             for groupItem in groupList:
-                for column in ('group1', 'group2', 'group3', 'group4'):
+                for column in ('group1', 'group2', 'group3',
+                               'group4', 'group5', 'group6'):
                     condList.append("{} like '%{}%'".format(column, groupItem))
 
         cond = ' or '.join(condList) if condList else ''
@@ -1616,7 +1637,8 @@ class RecorderGroup(Recorder):
         header = [(
             'ID', 'ジャンル', 'サブジャンル', '検定ジャンル',
             '☆下限', '☆上限', '問題',
-            'グループ１', 'グループ２', 'グループ３', 'グループ４',
+            'グループ１', 'グループ２', 'グループ３',
+            'グループ４', 'グループ５', 'グループ６',
             '選択肢数-難易度',
             'コメント', '安定性', 'シリーズ', '画像ID'
         )]
@@ -1626,7 +1648,8 @@ class RecorderGroup(Recorder):
                 '{}.id'.format(self.tableName),
                 'genre.genre', 'subgenre.subgenre', 'examgenre.examgenre',
                 'difficulty_min', 'difficulty_max', 'question',
-                'group1', 'group2', 'group3', 'group4',
+                'group1', 'group2', 'group3',
+                'group4', 'group5', 'group6',
                 "ifnull(relative_option_number, '不明')",
                 'comment', 'stable.stable', 'series.series', 'picture_id'
             ],
@@ -1640,6 +1663,8 @@ class RecorderGroup(Recorder):
         self._group2Frame.answer = ''
         self._group3Frame.answer = ''
         self._group4Frame.answer = ''
+        self._group5Frame.answer = ''
+        self._group6Frame.answer = ''
         self.relativeOpNum = None
 
 
