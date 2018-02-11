@@ -1529,22 +1529,22 @@ class RecorderGroup(Recorder):
         topFrame2.pack()
 
         self._group1Frame = AnswerTextFrame(topFrame1, text = 'グループ１')
-        self._group1Frame.answerText['width'] = 23
+        self._group1Frame.answerText['width'] = 24
         self._group1Frame.pack(side = tk.LEFT)
         self._group2Frame = AnswerTextFrame(topFrame1, text = 'グループ２')
-        self._group2Frame.answerText['width'] = 23
+        self._group2Frame.answerText['width'] = 24
         self._group2Frame.pack(side = tk.LEFT)
         self._group3Frame = AnswerTextFrame(topFrame1, text = 'グループ３')
-        self._group3Frame.answerText['width'] = 23
+        self._group3Frame.answerText['width'] = 24
         self._group3Frame.pack(side = tk.LEFT)
         self._group4Frame = AnswerTextFrame(topFrame2, text = 'グループ４')
-        self._group4Frame.answerText['width'] = 23
+        self._group4Frame.answerText['width'] = 24
         self._group4Frame.pack(side = tk.LEFT)
         self._group5Frame = AnswerTextFrame(topFrame2, text = 'グループ５')
-        self._group5Frame.answerText['width'] = 23
+        self._group5Frame.answerText['width'] = 24
         self._group5Frame.pack(side = tk.LEFT)
         self._group6Frame = AnswerTextFrame(topFrame2, text = 'グループ６')
-        self._group6Frame.answerText['width'] = 23
+        self._group6Frame.answerText['width'] = 24
         self._group6Frame.pack(side = tk.LEFT)
 
         bottomFrame = tk.LabelFrame(outerFrame,
