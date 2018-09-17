@@ -250,12 +250,17 @@ class QuizDataManager(tk.Frame):
             seriesShowLabel['text'] = seriesStr
 
         outerFrame = tk.Frame(self)
+        listboxIddHeight = 5
 
         genreFrame = tk.LabelFrame(outerFrame, text = 'ジャンル')
         genreFrame.pack(side = tk.LEFT, anchor = tk.N)
-        self.__genreBox = ListboxIdd(genreFrame)
+        genreYScroll = tk.Scrollbar(genreFrame, orient = tk.VERTICAL)
+        genreYScroll.pack(side = tk.RIGHT, fill = tk.Y)
+        self.__genreBox = ListboxIdd(genreFrame, height=listboxIddHeight)
         self.__genreBox.iddList = self.__qdManip.getGenreList()
         self.__genreBox.onSelect = onGenreBoxSelect
+        self.__genreBox['yscrollcommand'] = genreYScroll.set
+        genreYScroll['command'] = self.__genreBox.yview
         self.__genreBox.pack()
         genreShowLabel = tk.Label(genreFrame, bg = 'LightPink')
         genreShowLabel.pack()
@@ -265,7 +270,8 @@ class QuizDataManager(tk.Frame):
 
         subGenreFrame = tk.LabelFrame(outerFrame, text = 'サブジャンル')
         subGenreFrame.pack(side = tk.LEFT, anchor = tk.N)
-        self.__subGenreBox = ListboxIdd(subGenreFrame)
+        self.__subGenreBox = ListboxIdd(subGenreFrame,
+            height=listboxIddHeight)
         self.__subGenreBox.onSelect = onSubGenreBoxSelect
         self.__subGenreBox.pack()
         subGenreShowLabel = tk.Label(subGenreFrame, bg = 'LightSkyBlue')
@@ -278,7 +284,8 @@ class QuizDataManager(tk.Frame):
         examGenreFrame.pack(side = tk.LEFT, anchor = tk.N)
         examYScroll = tk.Scrollbar(examGenreFrame, orient = tk.VERTICAL)
         examYScroll.pack(side = tk.RIGHT, fill = tk.Y)
-        self.__examGenreBox = ListboxIdd(examGenreFrame)
+        self.__examGenreBox = ListboxIdd(examGenreFrame,
+            height=listboxIddHeight)
         self.__examGenreBox.iddList = self.__qdManip.getExamGenreList()
         self.__examGenreBox.onSelect = onExamGenreBoxSelect
         self.__examGenreBox['yscrollcommand'] = examYScroll.set
@@ -291,7 +298,7 @@ class QuizDataManager(tk.Frame):
         seriesFrame.pack(side = tk.LEFT, anchor = tk.N)
         seriesYScroll = tk.Scrollbar(seriesFrame, orient = tk.VERTICAL)
         seriesYScroll.pack(side = tk.RIGHT, fill = tk.Y)
-        self.__seriesBox = ListboxIdd(seriesFrame)
+        self.__seriesBox = ListboxIdd(seriesFrame, height=listboxIddHeight)
         self.__seriesBox.iddList = self.__qdManip.getSeriesList()
         self.__seriesBox.onSelect = onSeriesBoxSelect
         self.__seriesBox['yscrollcommand'] = seriesYScroll.set
